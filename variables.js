@@ -10,6 +10,14 @@ exports.updateVariableDefinitions = function() {
         name:  'playbackStatus'
     });
     variables.push({
+        label: 'Active playlist index',
+        name:  'activePlaylist'
+    });
+    variables.push({
+        label: 'Active playlist name',
+        name:  'activePlaylistName'
+    });
+    variables.push({
         label: 'Active clip index',
         name:  'activeClip'
     });
@@ -55,6 +63,8 @@ exports.updateVariableDefinitions = function() {
 */
 exports.updateStatusVariables = function(status) {
     this.setVariable('playbackStatus', status.playback_status);
+    if (status.playlist_index == undefined) { status.playlist_index = '-' };
+    if (status.playlist_display_name == undefined) { status.playlist_display_name = '-' };
     if (status.item_index == undefined) { status.item_index = '-' };
     if (status.item_display_name == undefined) { status.item_display_name = '-' };
     if (status.item_duration != undefined) {
@@ -73,6 +83,8 @@ exports.updateStatusVariables = function(status) {
         status.item_remaining = '-';
     };
     
+    this.setVariable('activePlaylist', status.playlist_index);
+    this.setVariable('activePlaylistName', status.playlist_display_name);
     this.setVariable('activeClip', status.item_index);
     this.setVariable('activeClipName', status.item_display_name);
     this.setVariable('clipDuration', status.item_duration);
