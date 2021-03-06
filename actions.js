@@ -10,7 +10,6 @@ module.exports = {
 	getActions() {
 		let actions = {};
 		
-		this.debug('Getting actions:', this.playlists);
 		actions['play'] = {
 			label: 'Play',
 			options: [
@@ -184,12 +183,15 @@ module.exports = {
 					label:   'Playlist',
 					id:      'playlist',
 					default: 0,
-					min:     0,
-					max:     10000,
-					tooltip: 'Enter an index (zero based) of a playlist',
-					required: true
+						min:     0,
+						max:     10000,
+						tooltip: 'Enter an index (zero based) of a playlist',
+						required: true
 				}
 			]
+		};
+		actions['updatePlaylists'] = {
+			label: 'Update playlist info'
 		};
 
 		return actions;

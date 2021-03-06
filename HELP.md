@@ -3,7 +3,8 @@
 Allows you to connect and control OnTheAir Video available from Softron Media Services.
 (The API is only available on the full version on OnTheAir Video; this does not work with the *Express* version).
 
-**Supported commands**
+### Supported commands
+
 * Play (with optional clip)
 * Play a clip at a given position (timecode or seconds)
 * Pause
@@ -12,11 +13,14 @@ Allows you to connect and control OnTheAir Video available from Softron Media Se
 * Stop
 * Skip to next clip
 * Skip to previous clip
+* Update list of playlists and clips
 
-**Supported feedback**
+### Supported feedback
+
 * TBD
 
-**Supported button variables**
+### Supported button variables
+
 * Playback status
 * Active clip index
 * Active clip name
@@ -26,3 +30,7 @@ Allows you to connect and control OnTheAir Video available from Softron Media Se
 * For each playlist:
  * Playlist name
  * Clip names for each clip
+
+### Usage
+
+Upon launch, the module will get a list of all open playlists and clips. This list does not update automatically, so in order to refresh this data there is an **Update playlist info** action that will reload variables to the current state.

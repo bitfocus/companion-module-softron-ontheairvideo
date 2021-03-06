@@ -197,6 +197,9 @@ class instance extends instance_skel {
 			case 'skipPrevious':
 				cmd = `playlists/${opt.playlist}/skip_previous`;
 				break;
+			case 'updatePlaylists':
+				this.getPlaylists();
+				break;
 		}
 		
 		this.sendGetRequest(cmd); // Execute command
