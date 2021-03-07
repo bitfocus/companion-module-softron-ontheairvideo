@@ -17,7 +17,9 @@ Allows you to connect and control OnTheAir Video available from Softron Media Se
 
 ### Supported feedback
 
-* TBD
+* Playback status
+* Active clip
+* Active clip, with status
 
 ### Supported button variables
 
