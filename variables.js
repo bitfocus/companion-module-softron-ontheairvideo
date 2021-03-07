@@ -41,7 +41,6 @@ exports.updateVariableDefinitions = function() {
     this.debug('Build playlist variables.');
     // playlist variables:
     this.playlists.forEach ((playlist, pIndex) => {
-//        this.debug('Playlist:', playlist);
         variables.push({
             label: `Playlist ${pIndex}`,
             name:  `playlist_${pIndex}`

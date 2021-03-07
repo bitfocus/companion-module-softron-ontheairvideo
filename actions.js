@@ -72,14 +72,12 @@ module.exports = {
 			label: 'Pause',
 			options: [
 				{
-					type:     'number',
+					type:     'textinput',
 					label:    'Playlist',
 					id:       'playlist',
 					default:  0,
-					min:      0,
-					max:      10000,
-					tooltip:  'Enter an index (zero based) of a playlist',
-					required: true
+					tooltip:  'Enter an index (zero based) or name of a playlist',
+					regex:    this.REGEX_SOMETHING
 				},
 				{
 					type:     'number',
@@ -96,14 +94,12 @@ module.exports = {
 			label: 'Pause clip at position',
 			options: [
 				{
-					type:     'number',
+					type:     'textinput',
 					label:    'Playlist',
 					id:       'playlist',
 					default:  0,
-					min:      0,
-					max:      10000,
-					tooltip:  'Enter an index (zero based) of a playlist',
-					required: true
+					tooltip:  'Enter an index (zero based) or name of a playlist',
+					regex:    this.REGEX_SOMETHING
 				},
 				{
 					type:     'number',
@@ -134,14 +130,12 @@ module.exports = {
 			label: 'Resume',
 			options: [
 				{
-					type:    'number',
-					label:   'Playlist',
-					id:      'playlist',
-					default: 0,
-					min:     0,
-					max:     10000,
-					tooltip: 'Enter an index (zero based) of a playlist',
-					required: true
+					type:     'textinput',
+					label:    'Playlist',
+					id:       'playlist',
+					default:  0,
+					tooltip:  'Enter an index (zero based) or name of a playlist',
+					regex:    this.REGEX_SOMETHING
 				}
 			]
 		};
@@ -164,14 +158,12 @@ module.exports = {
 			label: 'Skip to next clip',
 			options: [
 				{
-					type:    'number',
-					label:   'Playlist',
-					id:      'playlist',
-					default: 0,
-					min:     0,
-					max:     10000,
-					tooltip: 'Enter an index (zero based) of a playlist',
-					required: true
+					type:     'textinput',
+					label:    'Playlist',
+					id:       'playlist',
+					default:  0,
+					tooltip:  'Enter an index (zero based) or name of a playlist',
+					regex:    this.REGEX_SOMETHING
 				}
 			]
 		};
@@ -179,14 +171,12 @@ module.exports = {
 			label: 'Skip to previous clip',
 			options: [
 				{
-					type:    'number',
-					label:   'Playlist',
-					id:      'playlist',
-					default: 0,
-						min:     0,
-						max:     10000,
-						tooltip: 'Enter an index (zero based) of a playlist',
-						required: true
+					type:     'textinput',
+					label:    'Playlist',
+					id:       'playlist',
+					default:  0,
+					tooltip:  'Enter an index (zero based) or name of a playlist',
+					regex:    this.REGEX_SOMETHING
 				}
 			]
 		};
