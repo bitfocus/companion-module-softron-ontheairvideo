@@ -1,7 +1,7 @@
 const instance_skel = require('../../instance_skel');
 const actions       = require('./actions');
 const { updateVariableDefinitions, updateStatusVariables, updatePlaylistVariables } = require('./variables');
-//const { executeFeedback, initFeedbacks } = require('./feedbacks');
+const { initFeedbacks } = require('./feedbacks');
 
 let debug;
 let log;
@@ -35,6 +35,7 @@ class instance extends instance_skel {
 		
 		this.port            = 8081; // Fixed port
 		this.playlists       = [];
+		this.playing         = {};
 		this.pollingActive   = 0;
 		this.errorCount      = 0;
 		this.pollTimer       = null;
@@ -42,6 +43,13 @@ class instance extends instance_skel {
 		this.testingActive   = 0;
 		this.testInterval    = 10000;
 		this.pollUrl         = ``;
+		
+		this.CHOICES_PLAYBACKSTATUS = [
+			{ id: 'Playing',          label: 'Playing'          },
+			{ id: 'Paused',           label: 'Paused'           },
+			{ id: 'Stopped',          label: 'Stopped'          },
+			{ id: 'Hold First Frame', label: 'Hold First Frame' }
+		]
 		
 		this.CHOICES_POSITIONTYPE = [
 			{ id: 'relativeTimecode', label: 'Relative Timecode' },
@@ -76,11 +84,6 @@ class instance extends instance_skel {
 	* @since 1.0.0
 	*/
 	destroy() {
-		// Stop the polling, if it is running
-//		if (this.pollTimer !== undefined) {
-//			clearInterval(this.pollTimer);
-//		}
-		// Destroy everything
 		this.debug("destroy", this.id);
 	}
 	
@@ -104,12 +107,8 @@ class instance extends instance_skel {
 		this.getPlaylists();
 		this.actions(); // Set the actions after info is retrieved
 		this.initVariables();
+		this.initFeedbacks();
 		
-		// Setup polling command
-//		this.pollTimer = setInterval(
-//			this.sendPollCommand.bind(this),
-//			(this.pollingInterval)
-//		);
 		this.setupConnectivtyTester();
 
 	}
@@ -124,6 +123,14 @@ class instance extends instance_skel {
 		this.updateVariableDefinitions();
 	}
 
+	/**
+	* Set available feedback choices
+	*/
+	initFeedbacks() {
+		const feedbacks = initFeedbacks.bind(this)();
+		this.setFeedbackDefinitions(feedbacks);
+	}
+	
 	/**
 	* Set all the actions
 	* @param  {} system
@@ -313,7 +320,6 @@ class instance extends instance_skel {
 	* @since 1.0.0
 	*/
 	processResult(err, result) {
-//		debug('Result:', result.data)
 		if (err !== null) {
 			if ( result.error.code !== undefined ) {
 				this.log('error', 'Connection failed (' + result.error.code + ')');
@@ -336,11 +342,7 @@ class instance extends instance_skel {
 					if (this.testingActive === 1) {
 						this.setupPolling();
 					}
-	//						this.debug('OK.');
 					this.processData200(decodeURI(result.response.req.path), result.data);
-//					if (this.pollingActive === 0) {
-//						this.setupPolling();
-//					}
 					break;
 				case 201: // Created
 					this.status(this.STATUS_OK);
@@ -381,7 +383,9 @@ class instance extends instance_skel {
 //		debug('Sent cmd:',cmd);
 //		debug('Return data: ',data);
 		if (cmd == '/playback/playing') {
+			this.playing = data;
 			this.updateStatusVariables(data);
+			this.checkFeedbacks();
 		} else if (cmd == '/playlists') {
 			// Updated the list of playlists
 			let index;
