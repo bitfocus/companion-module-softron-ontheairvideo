@@ -17,7 +17,7 @@ module.exports = {
 					type:    'textinput',
 					label:   'Playlist',
 					id:      'playlist',
-					default: 0,
+					default: '0',
 					tooltip: 'Enter an index (zero based) or name of a playlist',
 					regex:   this.REGEX_SOMETHING
 				},
@@ -39,7 +39,7 @@ module.exports = {
 					type:     'textinput',
 					label:    'Playlist',
 					id:       'playlist',
-					default:  0,
+					default:  '0',
 					tooltip:  'Enter an index (zero based) or name of a playlist',
 					regex:    this.REGEX_SOMETHING
 				},
@@ -75,7 +75,7 @@ module.exports = {
 					type:     'textinput',
 					label:    'Playlist',
 					id:       'playlist',
-					default:  0,
+					default:  '0',
 					tooltip:  'Enter an index (zero based) or name of a playlist',
 					regex:    this.REGEX_SOMETHING
 				},
@@ -97,7 +97,7 @@ module.exports = {
 					type:     'textinput',
 					label:    'Playlist',
 					id:       'playlist',
-					default:  0,
+					default:  '0',
 					tooltip:  'Enter an index (zero based) or name of a playlist',
 					regex:    this.REGEX_SOMETHING
 				},
@@ -133,7 +133,7 @@ module.exports = {
 					type:     'textinput',
 					label:    'Playlist',
 					id:       'playlist',
-					default:  0,
+					default:  '0',
 					tooltip:  'Enter an index (zero based) or name of a playlist',
 					regex:    this.REGEX_SOMETHING
 				}
@@ -143,14 +143,12 @@ module.exports = {
 			label: 'Stop',
 			options: [
 				{
-					type:    'number',
-					label:   'Playlist',
-					id:      'playlist',
-					default: 0,
-					min:     0,
-					max:     10000,
-					tooltip: 'Enter an index (zero based) of a playlist',
-					required: true
+					type:     'textinput',
+					label:    'Playlist',
+					id:       'playlist',
+					default:  '0',
+					tooltip:  'Enter an index (zero based) or name of a playlist',
+					regex:    this.REGEX_SOMETHING
 				}
 			]
 		};
@@ -161,7 +159,7 @@ module.exports = {
 					type:     'textinput',
 					label:    'Playlist',
 					id:       'playlist',
-					default:  0,
+					default:  '0',
 					tooltip:  'Enter an index (zero based) or name of a playlist',
 					regex:    this.REGEX_SOMETHING
 				}
@@ -174,7 +172,7 @@ module.exports = {
 					type:     'textinput',
 					label:    'Playlist',
 					id:       'playlist',
-					default:  0,
+					default:  '0',
 					tooltip:  'Enter an index (zero based) or name of a playlist',
 					regex:    this.REGEX_SOMETHING
 				}

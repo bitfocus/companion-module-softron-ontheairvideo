@@ -1,5 +1,6 @@
 const instance_skel = require('../../instance_skel');
 const actions       = require('./actions');
+const presets       = require('./presets');
 const { updateVariableDefinitions, updateStatusVariables, updatePlaylistVariables } = require('./variables');
 const { initFeedbacks } = require('./feedbacks');
 
@@ -26,7 +27,8 @@ class instance extends instance_skel {
 		super(system, id, config);
 		
 		Object.assign(this, {
-			...actions
+			...actions,
+			...presets
 		})
 		
 		this.updateVariableDefinitions = updateVariableDefinitions;
@@ -108,6 +110,7 @@ class instance extends instance_skel {
 		this.actions(); // Set the actions after info is retrieved
 		this.initVariables();
 		this.initFeedbacks();
+		this.initPresets();
 		
 		this.setupConnectivtyTester();
 
@@ -132,6 +135,14 @@ class instance extends instance_skel {
 	}
 	
 	/**
+	* Initialize presets
+	* @param  {} updates
+	*/
+	initPresets(updates) {
+		this.setPresetDefinitions(this.getPresets());
+	}
+	
+/**
 	* Set all the actions
 	* @param  {} system
 	*/
