@@ -1,0 +1,50 @@
+<meta charset="UTF-8">
+<h2>Softron OnTheAir Video</h2>
+
+<p>Allows you to connect and control OnTheAir Video available from Softron Media Services.
+(The API is only available on the full version on OnTheAir Video; this does not work with the <em>Express</em> version).</p>
+
+<h3>Supported commands</h3>
+
+<ul>
+<li>Play (with optional clip)</li>
+<li>Play a clip at a given position (timecode or seconds)</li>
+<li>Pause</li>
+<li>Pause a clip at a given position (timecode or seconds)</li>
+<li>Resume</li>
+<li>Stop</li>
+<li>Skip to next clip</li>
+<li>Skip to previous clip</li>
+<li>Update list of playlists and clips</li>
+</ul>
+
+<h3>Supported feedback</h3>
+
+<ul>
+<li>Playback status</li>
+<li>Active clip</li>
+<li>Active clip, with status</li>
+</ul>
+
+<h3>Supported button variables</h3>
+
+<ul>
+<li>Playback status</li>
+<li>Active clip index</li>
+<li>Active clip name</li>
+<li>Clip duration</li>
+<li>Clip time elapsed</li>
+<li>Clip time remaining</li>
+<li>For each playlist:
+<ul>
+<li>Playlist name</li>
+<li>Clip names for each clip</li>
+<li>Playlist duration</li>
+<li>Playlist time elapsed</li>
+<li>Playlist time remaining</li>
+</ul></li>
+</ul>
+
+<h3>Usage</h3>
+
+<p>Upon launch, the module will get a list of all open playlists and clips. This list does not update automatically, so in order to refresh this data there is an <strong>Update playlist info</strong> action that will reload variables to the current state.</p>

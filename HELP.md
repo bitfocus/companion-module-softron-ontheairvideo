@@ -1,7 +1,7 @@
 ## Softron OnTheAir Video
 
 Allows you to connect and control OnTheAir Video available from Softron Media Services.
-(The API is only available on the full version on OnTheAir Video; this does not work with the _Express_ version).
+(The API is only available on the full version on OnTheAir Video; this does not work with the _Express_ version). Connects using port 8081.
 
 ### Supported commands
 
@@ -30,8 +30,11 @@ Allows you to connect and control OnTheAir Video available from Softron Media Se
 - Clip time elapsed
 - Clip time remaining
 - For each playlist:
-- Playlist name
-- Clip names for each clip
+ - Playlist name
+ - Clip names for each clip
+ - Playlist duration
+ - Playlist time elapsed
+ - Playlist time remaining
 
 ### Usage
 
