@@ -18,6 +18,18 @@ exports.updateVariableDefinitions = function () {
 		name: 'activePlaylistName',
 	})
 	variables.push({
+		label: 'Active playlist duration',
+		name: 'playlistDuration',
+	})
+	variables.push({
+		label: 'Active playlist elapsed',
+		name: 'playlistElapsed',
+	})
+	variables.push({
+		label: 'Active playlist remaining',
+		name: 'playlistRemaining',
+	})
+	variables.push({
 		label: 'Active clip index',
 		name: 'activeClip',
 	})
@@ -30,17 +42,18 @@ exports.updateVariableDefinitions = function () {
 		name: 'clipDuration',
 	})
 	variables.push({
-		label: 'Time elapsed',
+		label: 'Clip elapsed',
 		name: 'clipElapsed',
 	})
 	variables.push({
-		label: 'Time remaining',
+		label: 'Clip remaining',
 		name: 'clipRemaining',
 	})
 
 	this.debug('Build playlist variables.')
 	// playlist variables:
 	this.playlists.forEach((playlist, pIndex) => {
+		// this.debug('Playlist:', playlist)
 		variables.push({
 			label: `Playlist ${pIndex}`,
 			name: `playlist_${pIndex}`,
@@ -74,6 +87,21 @@ exports.updateStatusVariables = function (status) {
 	if (status.item_display_name == undefined) {
 		status.item_display_name = '-'
 	}
+	if (status.playlist_duration != undefined) {
+		status.playlist_duration = renderTime(status.playlist_duration)
+	} else {
+		status.playlist_duration = '-'
+	}
+	if (status.playlist_elapsed != undefined) {
+		status.playlist_elapsed = renderTime(status.playlist_elapsed)
+	} else {
+		status.playlist_elapsed = '-'
+	}
+	if (status.playlist_remaining != undefined) {
+		status.playlist_remaining = renderTime(status.playlist_remaining)
+	} else {
+		status.playlit_remaingin = '-'
+	}
 	if (status.item_duration != undefined) {
 		status.item_duration = renderTime(status.item_duration)
 	} else {
@@ -94,6 +122,9 @@ exports.updateStatusVariables = function (status) {
 	this.setVariable('activePlaylistName', status.playlist_display_name)
 	this.setVariable('activeClip', status.item_index)
 	this.setVariable('activeClipName', status.item_display_name)
+	this.setVariable('playlistDuration', status.playlist_duration)
+	this.setVariable('playlistElapsed', status.playlist_elapsed)
+	this.setVariable('playlistRemaining', status.playlist_remaining)
 	this.setVariable('clipDuration', status.item_duration)
 	this.setVariable('clipElapsed', status.item_elapsed)
 	this.setVariable('clipRemaining', status.item_remaining)
@@ -104,7 +135,7 @@ exports.updateStatusVariables = function (status) {
  */
 exports.updatePlaylistVariables = function () {
 	this.playlists.forEach((playlist, pIndex) => {
-		//        this.debug('Playlist:', playlist);
+		// this.debug('Playlist:', playlist);
 		this.setVariable(`playlist_${pIndex}`, playlist.label)
 		playlist.clips.forEach((clip, index) => {
 			this.setVariable(`clip_${pIndex}_${index}`, clip)

@@ -1,6 +1,6 @@
 {
 	"name": "softron-ontheairvideo",
-	"version": "1.0.2",
+	"version": "1.0.3",
 	"api_version": "1.0.0",
 	"keywords": [
 		"Playback",
@@ -9,7 +9,7 @@
 	],
 	"manufacturer": "Softron",
 	"product": "OnTheAir Video",
-	"shortname": "OTA Video",
+	"shortname": "otav",
 	"description": "Module to control OnTheAir Video",
 	"main": "index.js",
 	"scripts": {
