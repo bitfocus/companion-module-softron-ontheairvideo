@@ -26,7 +26,7 @@ exports.getPresets = function () {
 				action: 'play',
 				options: {
 					playlist: '0',
-					clip: null,
+					clip: '',
 				},
 			},
 		],
@@ -60,7 +60,7 @@ exports.getPresets = function () {
 				action: 'pause',
 				options: {
 					playlist: '0',
-					clip: null,
+					clip: '',
 				},
 			},
 		],
