@@ -157,7 +157,7 @@ exports.initFeedbacks = function () {
 		],
 		style: styleRemaining,
 		callback: ({ options }, bank) => {
-			if (this.playing.item_playback_status == 'playing') {
+			if (this.playing.item_playback_status == 'playing'||'paused') {
 				switch (options.type) {
 					case 'clip':
 						if (Math.floor(this.playing.item_remaining) <= options.time) {
