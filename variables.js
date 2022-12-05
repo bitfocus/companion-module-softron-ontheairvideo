@@ -88,46 +88,46 @@ exports.updateStatusVariables = function (status) {
 		status.item_display_name = '-'
 	}
 	if (status.playlist_duration != undefined) {
-		status.playlist_duration = renderTime(status.playlist_duration)
+		status.playlist_duration_display = renderTime(status.playlist_duration)
 	} else {
-		status.playlist_duration = '-'
+		status.playlist_duration_display = '-'
 	}
 	if (status.playlist_elapsed != undefined) {
-		status.playlist_elapsed = renderTime(status.playlist_elapsed)
+		status.playlist_elapsed_display = renderTime(status.playlist_elapsed)
 	} else {
-		status.playlist_elapsed = '-'
+		status.playlist_elapsed_display = '-'
 	}
 	if (status.playlist_remaining != undefined) {
-		status.playlist_remaining = renderTime(status.playlist_remaining)
+		status.playlist_remaining_display = renderTime(status.playlist_remaining)
 	} else {
-		status.playlit_remaingin = '-'
+		status.playlit_remaingin_display = '-'
 	}
 	if (status.item_duration != undefined) {
-		status.item_duration = renderTime(status.item_duration)
+		status.item_duration_display = renderTime(status.item_duration)
 	} else {
-		status.item_duration = '-'
+		status.item_duration_display = '-'
 	}
 	if (status.item_elapsed != undefined) {
-		status.item_elapsed = renderTime(status.item_elapsed)
+		status.item_elapsed_display = renderTime(status.item_elapsed)
 	} else {
-		status.item_elapsed = '-'
+		status.item_elapsed_display = '-'
 	}
 	if (status.item_remaining != undefined) {
-		status.item_remaining = renderTime(status.item_remaining)
+		status.item_remaining_display = renderTime(status.item_remaining)
 	} else {
-		status.item_remaining = '-'
+		status.item_remaining_display = '-'
 	}
 
 	this.setVariable('activePlaylist', status.playlist_index)
 	this.setVariable('activePlaylistName', status.playlist_display_name)
 	this.setVariable('activeClip', status.item_index)
 	this.setVariable('activeClipName', status.item_display_name)
-	this.setVariable('playlistDuration', status.playlist_duration)
-	this.setVariable('playlistElapsed', status.playlist_elapsed)
-	this.setVariable('playlistRemaining', status.playlist_remaining)
-	this.setVariable('clipDuration', status.item_duration)
-	this.setVariable('clipElapsed', status.item_elapsed)
-	this.setVariable('clipRemaining', status.item_remaining)
+	this.setVariable('playlistDuration', status.playlist_duration_display)
+	this.setVariable('playlistElapsed', status.playlist_elapsed_display)
+	this.setVariable('playlistRemaining', status.playlist_remaining_display)
+	this.setVariable('clipDuration', status.item_duration_display)
+	this.setVariable('clipElapsed', status.item_elapsed_display)
+	this.setVariable('clipRemaining', status.item_remaining_display)
 }
 
 /**

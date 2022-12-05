@@ -35,6 +35,10 @@ exports.initFeedbacks = function () {
 		id: 'bg',
 		default: this.rgb(0, 51, 204),
 	}
+	
+	const styleRemaining = {
+		bgcolor: this.rgb(255, 128, 0),
+	}
 
 	feedbacks.playbackStatus = {
 		label: 'Playback status',
@@ -127,6 +131,46 @@ exports.initFeedbacks = function () {
 				return { color: options.fg, bgcolor: options.bg }
 			}
 		},
+	}
+	
+	feedbacks.timeRemaining = {
+		type: 'boolean',
+		label: 'Time remaining',
+		description: 'Set feedback when a specified amount of time remains in the clip/playlist',
+		options: [
+			{
+				type: 'dropdown',
+				label: 'Clip/Playlist',
+				id: 'type',
+				default: 'clip',
+				choices: this.CHOICES_CLIP_PLAYLIST,
+			},
+			{
+				type: 'number',
+				label: 'Time (seconds)',
+				id: 'time',
+				tooltip: 'The number of seconds remaining when the feedback should trigger',
+				default: '30',
+				min: 0,
+				max: 1000,
+			},
+		],
+		style: styleRemaining,
+		callback: ({ options }, bank) => {
+			if (this.playing.item_playback_status == 'playing') {
+				switch (options.type) {
+					case 'clip':
+						if (Math.floor(this.playing.item_remaining) <= options.time) {
+							return true
+						}
+						break;
+					case 'playlist':
+						if (Math.floor(this.playing.playlist_remaining) <= options.time) {
+							return true
+						}
+				}
+			}
+		}
 	}
 
 	return feedbacks

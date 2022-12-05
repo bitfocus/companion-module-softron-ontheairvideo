@@ -57,6 +57,11 @@ class instance extends instance_skel {
 			{ id: 'mediaTimecode', label: 'Media Timecode' },
 			{ id: 'relativeSeconds', label: 'Relative Seconds' },
 		]
+		
+		this.CHOICES_CLIP_PLAYLIST = [
+			{ id: 'clip', label: 'Clip' },
+			{ id: 'playlist', label: 'Playlist' },
+		]
 	}
 
 	/**
