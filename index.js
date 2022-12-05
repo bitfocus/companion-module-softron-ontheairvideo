@@ -237,6 +237,12 @@ class instance extends instance_skel {
 					cmd = `playlists/${opt.playlist}/skip_previous`
 				}
 				break
+			case 'gotoEndMinus':
+				if (this.playing.item_playback_status == 'playing'||'paused') {
+					const mode = (this.playing.item_playback_status == 'playing') ? 'play' : 'pause'
+					const time = this.playing.item_duration - opt.tMinus
+					cmd = `playlists/${this.playing.playlist_index}/items/${this.playing.item_index}/${mode}?position_relative_seconds=${time}`
+				}
 			case 'updatePlaylists':
 				this.getPlaylists()
 				break

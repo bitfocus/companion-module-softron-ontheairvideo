@@ -179,6 +179,17 @@ module.exports = {
 				},
 			],
 		}
+		actions['gotoEndMinus'] = {
+			label: 'Goto (end minus)',
+			options: [
+				{ type: 'number',
+					label: 'Time to end of clip (seconds)',
+					id: 'tMinus',
+					default: '30',
+					required: true,
+				},
+			],
+		}
 		actions['updatePlaylists'] = {
 			label: 'Update playlist info',
 		}
