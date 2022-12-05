@@ -162,10 +162,14 @@ class instance extends instance_skel {
 		let cmd = ''
 		switch (id) {
 			case 'play':
-				if (opt.clip !== '') {
-					cmd = `playlists/${opt.playlist}/items/${opt.clip}/play`
+				if (opt.playlist == '') {
+					cmd = `playback/play`
 				} else {
-					cmd = `playlists/${opt.playlist}/play`
+					if (opt.clip !== '') {
+						cmd = `playlists/${opt.playlist}/items/${opt.clip}/play`
+					} else {
+						cmd = `playlists/${opt.playlist}/play`
+					}
 				}
 				break
 			case 'playPosition':
@@ -182,10 +186,14 @@ class instance extends instance_skel {
 				}
 				break
 			case 'pause':
-				if (opt.clip !== '') {
-					cmd = `playlists/${opt.playlist}/items/${opt.clip}/pause`
+				if (opt.playlist == '') {
+					cmd = `playback/pause`
 				} else {
-					cmd = `playlists/${opt.playlist}/pause`
+					if (opt.clip !== '') {
+						cmd = `playlists/${opt.playlist}/items/${opt.clip}/pause`
+					} else {
+						cmd = `playlists/${opt.playlist}/pause`
+					}
 				}
 				break
 			case 'pausePosition':
@@ -202,20 +210,32 @@ class instance extends instance_skel {
 				}
 				break
 			case 'resume':
-				cmd = `playlists/${opt.playlist}/resume`
+				if (opt.playlist == '') {
+					cmd = `playback/resume`
+				} else {
+					cmd = `playlists/${opt.playlist}/resume`
+				}
 				break
 			case 'stop':
-				if (opt.playlist !== null) {
+				if (opt.playlist == '') {
 					cmd = `playback/stop`
 				} else {
 					cmd = `playlists/${opt.playlist}/stop`
 				}
 				break
 			case 'skipNext':
-				cmd = `playlists/${opt.playlist}/skip_next`
+				if (opt.playlist == '') {
+					cmd = `playback/skip_next`
+				} else {
+					cmd = `playlists/${opt.playlist}/skip_next`
+				}
 				break
 			case 'skipPrevious':
-				cmd = `playlists/${opt.playlist}/skip_previous`
+				if (opt.playlist == '') {
+					cmd = `playback/skip_previous`
+				} else {
+					cmd = `playlists/${opt.playlist}/skip_previous`
+				}
 				break
 			case 'updatePlaylists':
 				this.getPlaylists()

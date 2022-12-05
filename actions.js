@@ -14,11 +14,11 @@ module.exports = {
 			options: [
 				{
 					type: 'textinput',
-					label: 'Playlist',
+					label: 'Playlist (optional, name/index)',
 					id: 'playlist',
-					default: '0',
+					default: '',
 					tooltip: 'Enter an index (zero based) or name of a playlist',
-					required: true,
+					required: false,
 				},
 				{
 					type: 'number',
@@ -73,11 +73,11 @@ module.exports = {
 			options: [
 				{
 					type: 'textinput',
-					label: 'Playlist',
+					label: 'Playlist (optional, name/index)',
 					id: 'playlist',
-					default: '0',
+					default: '',
 					tooltip: 'Enter an index (zero based) or name of a playlist',
-					required: true,
+					required: false,
 				},
 				{
 					type: 'number',
@@ -132,11 +132,11 @@ module.exports = {
 			options: [
 				{
 					type: 'textinput',
-					label: 'Playlist',
+					label: 'Playlist (optional, name/index)',
 					id: 'playlist',
-					default: '0',
+					default: '',
 					tooltip: 'Enter an index (zero based) or name of a playlist',
-					required: true,
+					required: false,
 				},
 			],
 		}
@@ -145,11 +145,11 @@ module.exports = {
 			options: [
 				{
 					type: 'textinput',
-					label: 'Playlist',
+					label: 'Playlist (optional, name/index)',
 					id: 'playlist',
-					default: '0',
+					default: '',
 					tooltip: 'Enter an index (zero based) or name of a playlist',
-					required: true,
+					required: false,
 				},
 			],
 		}
@@ -158,11 +158,11 @@ module.exports = {
 			options: [
 				{
 					type: 'textinput',
-					label: 'Playlist',
+					label: 'Playlist (optional, name/index)',
 					id: 'playlist',
-					default: '0',
+					default: '',
 					tooltip: 'Enter an index (zero based) or name of a playlist',
-					required: true,
+					required: false,
 				},
 			],
 		}
@@ -171,11 +171,11 @@ module.exports = {
 			options: [
 				{
 					type: 'textinput',
-					label: 'Playlist',
+					label: 'Playlist (optional, name/index)',
 					id: 'playlist',
-					default: '0',
+					default: '',
 					tooltip: 'Enter an index (zero based) or name of a playlist',
-					required: true,
+					required: false,
 				},
 			],
 		}

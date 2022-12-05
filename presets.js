@@ -25,7 +25,7 @@ exports.getPresets = function () {
 			{
 				action: 'play',
 				options: {
-					playlist: '0',
+					playlist: '',
 					clip: '',
 				},
 			},
@@ -59,7 +59,7 @@ exports.getPresets = function () {
 			{
 				action: 'pause',
 				options: {
-					playlist: '0',
+					playlist: '',
 					clip: '',
 				},
 			},
@@ -93,7 +93,7 @@ exports.getPresets = function () {
 			{
 				action: 'stop',
 				options: {
-					playlist: '0',
+					playlist: '',
 				},
 			},
 		],
@@ -126,7 +126,7 @@ exports.getPresets = function () {
 			{
 				action: 'skipPrevious',
 				options: {
-					playlist: '0',
+					playlist: '',
 				},
 			},
 		],
@@ -149,7 +149,7 @@ exports.getPresets = function () {
 			{
 				action: 'skipNext',
 				options: {
-					playlist: '0',
+					playlist: '',
 				},
 			},
 		],
