@@ -157,7 +157,7 @@ class instance extends instance_skel {
 		let cmd = ''
 		switch (id) {
 			case 'play':
-				if (opt.clip !== null) {
+				if (opt.clip !== '') {
 					cmd = `playlists/${opt.playlist}/items/${opt.clip}/play`
 				} else {
 					cmd = `playlists/${opt.playlist}/play`
@@ -177,7 +177,7 @@ class instance extends instance_skel {
 				}
 				break
 			case 'pause':
-				if (opt.clip !== null) {
+				if (opt.clip !== '') {
 					cmd = `playlists/${opt.playlist}/items/${opt.clip}/pause`
 				} else {
 					cmd = `playlists/${opt.playlist}/pause`
