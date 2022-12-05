@@ -50,7 +50,7 @@ exports.getPresets = function () {
 		label: 'Pause',
 		bank: {
 			style: 'text',
-			text: '\u23f8',
+			text: '\u23ef',
 			size: '44',
 			color: pausedColor,
 			bgcolor: blackColor,
