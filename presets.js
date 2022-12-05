@@ -2,10 +2,11 @@ exports.getPresets = function () {
 	let presets = []
 	const whiteColor = this.rgb(255, 255, 255)
 	const blackColor = this.rgb(0, 0, 0)
-	const backgroundColorPlaying = this.rgb(0, 204, 0)
-	const backgroundColorPaused = this.rgb(255, 255, 0)
-	const backgroundColorStopped = this.rgb(255, 0, 0)
-	const backgroundColorActive = this.rgb(0, 51, 204)
+	const playingColor = this.rgb(0, 204, 0)
+	const pausedColor = this.rgb(255, 255, 0)
+	const stoppedColor = this.rgb(255, 0, 0)
+	const prevNextColor = this.rgb(0, 51, 204)
+	const activeColor = this.rgb(0, 51, 204)
 
 	/**
 	 * Play
@@ -17,7 +18,7 @@ exports.getPresets = function () {
 			style: 'text',
 			text: '\u23f5',
 			size: '44',
-			color: whiteColor,
+			color: playingColor,
 			bgcolor: blackColor,
 		},
 		actions: [
@@ -35,7 +36,7 @@ exports.getPresets = function () {
 				options: {
 					status: 'Playing',
 					fg: whiteColor,
-					bg: backgroundColorPlaying,
+					bg: playingColor,
 				},
 			},
 		],
@@ -51,7 +52,7 @@ exports.getPresets = function () {
 			style: 'text',
 			text: '\u23f8',
 			size: '44',
-			color: whiteColor,
+			color: pausedColor,
 			bgcolor: blackColor,
 		},
 		actions: [
@@ -69,7 +70,7 @@ exports.getPresets = function () {
 				options: {
 					status: 'Paused',
 					fg: blackColor,
-					bg: backgroundColorPaused,
+					bg: pausedColor,
 				},
 			},
 		],
@@ -85,7 +86,7 @@ exports.getPresets = function () {
 			style: 'text',
 			text: '\u23f9',
 			size: '44',
-			color: whiteColor,
+			color: stoppedColor,
 			bgcolor: blackColor,
 		},
 		actions: [
@@ -102,7 +103,7 @@ exports.getPresets = function () {
 				options: {
 					status: 'Stopped',
 					fg: whiteColor,
-					bg: backgroundColorStopped,
+					bg: stoppedColor,
 				},
 			},
 		],
@@ -118,7 +119,7 @@ exports.getPresets = function () {
 			style: 'text',
 			text: '\u23ee',
 			size: '44',
-			color: whiteColor,
+			color: prevNextColor,
 			bgcolor: blackColor,
 		},
 		actions: [
@@ -141,7 +142,7 @@ exports.getPresets = function () {
 			style: 'text',
 			text: '\u23ed',
 			size: '44',
-			color: whiteColor,
+			color: prevNextColor,
 			bgcolor: blackColor,
 		},
 		actions: [
@@ -173,7 +174,7 @@ exports.getPresets = function () {
 				options: {
 					status: 'Playing',
 					fg: whiteColor,
-					bg: backgroundColorPlaying,
+					bg: playingColor,
 				},
 			},
 			{
@@ -181,7 +182,7 @@ exports.getPresets = function () {
 				options: {
 					status: 'Paused',
 					fg: blackColor,
-					bg: backgroundColorPaused,
+					bg: pausedColor,
 				},
 			},
 			{
@@ -189,7 +190,7 @@ exports.getPresets = function () {
 				options: {
 					status: 'Stopped',
 					fg: whiteColor,
-					bg: backgroundColorStopped,
+					bg: stoppedColor,
 				},
 			},
 			{
@@ -197,7 +198,7 @@ exports.getPresets = function () {
 				options: {
 					status: 'Hold First Frame',
 					fg: whiteColor,
-					bg: backgroundColorActive,
+					bg: activeColor,
 				},
 			},
 		],
@@ -255,7 +256,7 @@ exports.getPresets = function () {
 							clip: clip,
 							status: 'Hold First Frame',
 							fg: whiteColor,
-							bg: backgroundColorActive,
+							bg: activeColor,
 						},
 					},
 					{
@@ -265,7 +266,7 @@ exports.getPresets = function () {
 							clip: clip,
 							status: 'Playing',
 							fg: whiteColor,
-							bg: backgroundColorPlaying,
+							bg: playingColor,
 						},
 					},
 					{
@@ -275,7 +276,7 @@ exports.getPresets = function () {
 							clip: clip,
 							status: 'Paused',
 							fg: blackColor,
-							bg: backgroundColorPaused,
+							bg: pausedColor,
 						},
 					},
 				],
