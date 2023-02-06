@@ -1,28 +1,19 @@
 {
 	"name": "softron-ontheairvideo",
-	"version": "1.0.3",
-	"api_version": "1.0.0",
-	"keywords": [
-		"Playback",
-		"Video",
-		"Media"
-	],
-	"manufacturer": "Softron",
-	"product": "OnTheAir Video",
-	"shortname": "otav",
-	"description": "Module to control OnTheAir Video",
+	"version": "2.0.0",
 	"main": "index.js",
 	"scripts": {
 		"test": "echo \"Error: no test specified\" && exit 1"
 	},
-	"author": "Stephen Harrison <stephen@redleopard.org>",
 	"license": "MIT",
-	"homepage": "https://github.com/bitfocus/companion-module-softron-ontheairvideo#readme",
-	"bugs": {
-		"url": "https://github.com/bitfocus/companion-module-softron-ontheairvideo/issues"
-	},
 	"repository": {
 		"type": "git",
 		"url": "git+https://github.com/bitfocus/companion-module-softron-ontheairvideo.git"
+	},
+	"dependencies": {
+		"@companion-module/base": "~1.1.1"
+	},
+	"devDependencies": {
+		"@companion-module/tools": "^1.0.0"
 	}
 }
