@@ -34,7 +34,6 @@ class instance extends instance_skel {
 		this.updateStatusVariables = updateStatusVariables
 		this.updatePlaylistVariables = updatePlaylistVariables
 
-		this.port = 8081 // Fixed port
 		this.playlists = []
 		this.playing = {}
 		this.pollingActive = 0
@@ -79,6 +78,14 @@ class instance extends instance_skel {
 				label: 'Target IP',
 				width: 6,
 				regex: this.REGEX_IP,
+			},
+			{
+				type: 'number',
+				id: 'port',
+				label: 'Target Port',
+				min: 1,
+				max: 65535,
+				default: 8081,
 			},
 		]
 	}
@@ -263,7 +270,7 @@ class instance extends instance_skel {
 		debug('Setup Connectivity Tester!!!!!!')
 		this.errorCount = 0
 		this.pollingActive = 0
-		this.pollUrl = `http://${this.config.host}:${this.port}/playback/playing`
+		this.pollUrl = `http://${this.config.host}:${this.config.port}/playback/playing
 		this.system.emit('rest_poll_destroy', this.id)
 
 		this.system.emit(
@@ -294,7 +301,7 @@ class instance extends instance_skel {
 	setupPolling() {
 		this.errorCount = 0
 		this.testingActive = 0
-		this.pollUrl = `http://${this.config.host}:${this.port}/playback/playing`
+		this.pollUrl = `http://${this.config.host}:${this.config.port}/playback/playing`
 		this.system.emit('rest_poll_destroy', this.id)
 
 		this.system.emit(
@@ -344,7 +351,7 @@ class instance extends instance_skel {
 	 * @param  {} cmd
 	 */
 	sendGetRequest(cmd) {
-		let url = `http://${this.config.host}:${this.port}/${cmd}`
+		let url = `http://${this.config.host}:${this.config.port}/${cmd}`
 		this.system.emit('rest_get', url, this.processResult.bind(this))
 	}
 
