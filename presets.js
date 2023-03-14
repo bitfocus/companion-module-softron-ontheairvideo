@@ -1,38 +1,45 @@
+const { combineRgb } = require('@companion-module/base')
+
 exports.getPresets = function () {
-	let presets = []
-	const whiteColor = this.rgb(255, 255, 255)
-	const blackColor = this.rgb(0, 0, 0)
-	const playingColor = this.rgb(0, 204, 0)
-	const pausedColor = this.rgb(255, 255, 0)
-	const stoppedColor = this.rgb(255, 0, 0)
-	const prevNextColor = this.rgb(0, 51, 204)
-	const activeColor = this.rgb(0, 51, 204)
+	const presets = {}
+	const whiteColor = combineRgb(255, 255, 255)
+	const blackColor = combineRgb(0, 0, 0)
+	const playingColor = combineRgb(0, 204, 0)
+	const pausedColor = combineRgb(255, 255, 0)
+	const stoppedColor = combineRgb(255, 0, 0)
+	const prevNextColor = combineRgb(0, 51, 204)
+	const activeColor = combineRgb(0, 51, 204)
 
 	/**
 	 * Play
 	 */
-	presets.push({
+	presets['play'] = {
+		type: 'button',
 		category: 'Transport',
-		label: 'Play',
-		bank: {
-			style: 'text',
+		name: 'Play',
+		style: {
 			text: '\u23f5',
 			size: '44',
 			color: playingColor,
 			bgcolor: blackColor,
 		},
-		actions: [
+		steps: [
 			{
-				action: 'play',
-				options: {
-					playlist: '',
-					clip: '',
-				},
+				down: [
+					{
+						actionId: 'play',
+						options: {
+							playlist: '',
+							clip: '',
+						},
+					},
+				],
+				up: [],
 			},
 		],
 		feedbacks: [
 			{
-				type: 'playbackStatus',
+				feedbackId: 'playbackStatus',
 				options: {
 					status: 'Playing',
 					fg: whiteColor,
@@ -40,33 +47,38 @@ exports.getPresets = function () {
 				},
 			},
 		],
-	})
+	}
 
 	/**
 	 * Pause
 	 */
-	presets.push({
+	presets['pause'] = {
+		type: 'button',
 		category: 'Transport',
-		label: 'Pause',
-		bank: {
-			style: 'text',
+		name: 'Pause',
+		style: {
 			text: '\u23ef',
 			size: '44',
 			color: pausedColor,
 			bgcolor: blackColor,
 		},
-		actions: [
+		steps: [
 			{
-				action: 'pause',
-				options: {
-					playlist: '',
-					clip: '',
-				},
+				down: [
+					{
+						actionId: 'pause',
+						options: {
+							playlist: '',
+							clip: '',
+						},
+					},
+				],
+				up: [],
 			},
 		],
 		feedbacks: [
 			{
-				type: 'playbackStatus',
+				feedbackId: 'playbackStatus',
 				options: {
 					status: 'Paused',
 					fg: blackColor,
@@ -74,32 +86,37 @@ exports.getPresets = function () {
 				},
 			},
 		],
-	})
+	}
 
 	/**
 	 * Stop
 	 */
-	presets.push({
+	presets['stop'] = {
+		type: 'button',
 		category: 'Transport',
-		label: 'Stop',
-		bank: {
-			style: 'text',
+		name: 'Stop',
+		style: {
 			text: '\u23f9',
 			size: '44',
 			color: stoppedColor,
 			bgcolor: blackColor,
 		},
-		actions: [
+		steps: [
 			{
-				action: 'stop',
-				options: {
-					playlist: '',
-				},
+				down: [
+					{
+						actionId: 'stop',
+						options: {
+							playlist: '',
+						},
+					},
+				],
+				up: [],
 			},
 		],
 		feedbacks: [
 			{
-				type: 'playbackStatus',
+				feedbackId: 'playbackStatus',
 				options: {
 					status: 'Stopped',
 					fg: whiteColor,
@@ -107,70 +124,86 @@ exports.getPresets = function () {
 				},
 			},
 		],
-	})
+	}
 
 	/**
 	 * Previous
 	 */
-	presets.push({
+	presets['previous'] = {
+		type: 'button',
 		category: 'Transport',
-		label: 'Previous',
-		bank: {
-			style: 'text',
+		name: 'Previous',
+		style: {
 			text: '\u23ee',
 			size: '44',
 			color: prevNextColor,
 			bgcolor: blackColor,
 		},
-		actions: [
+		steps: [
 			{
-				action: 'skipPrevious',
-				options: {
-					playlist: '',
-				},
+				down: [
+					{
+						actionId: 'skipPrevious',
+						options: {
+							playlist: '',
+						},
+					},
+				],
+				up: [],
 			},
 		],
-	})
+	}
 
 	/**
 	 * Next
 	 */
-	presets.push({
+	presets['next'] = {
+		type: 'button',
 		category: 'Transport',
-		label: 'Next',
-		bank: {
-			style: 'text',
+		name: 'Next',
+		style: {
 			text: '\u23ed',
 			size: '44',
 			color: prevNextColor,
 			bgcolor: blackColor,
 		},
-		actions: [
+		steps: [
 			{
-				action: 'skipNext',
-				options: {
-					playlist: '',
-				},
+				down: [
+					{
+						action: 'skipNext',
+						options: {
+							playlist: '',
+						},
+					},
+				],
+				up: [],
 			},
 		],
-	})
+	}
 
 	/**
 	 * Playback status
 	 */
-	presets.push({
+	presets['status'] = {
+		type: 'button',
 		category: 'Transport',
-		label: 'Status',
-		bank: {
-			style: 'text',
+		name: 'Status',
+		style: {
 			text: `$(${this.shorthame}:playbackStatus)`,
 			size: '14',
 			color: whiteColor,
 			bgcolor: blackColor,
 		},
+		steps: [
+			{
+				down: [],
+				up: [],
+			},
+		],
 		feedbacks: [
 			{
-				type: 'playbackStatus',
+				feedbackId: 'playbackStatus',
 				options: {
 					status: 'Playing',
 					fg: whiteColor,
@@ -178,7 +211,7 @@ exports.getPresets = function () {
 				},
 			},
 			{
-				type: 'playbackStatus',
+				feedbackId: 'playbackStatus',
 				options: {
 					status: 'Paused',
 					fg: blackColor,
@@ -186,7 +219,7 @@ exports.getPresets = function () {
 				},
 			},
 			{
-				type: 'playbackStatus',
+				feedbackId: 'playbackStatus',
 				options: {
 					status: 'Stopped',
 					fg: whiteColor,
@@ -194,7 +227,7 @@ exports.getPresets = function () {
 				},
 			},
 			{
-				type: 'playbackStatus',
+				feedbackId: 'playbackStatus',
 				options: {
 					status: 'Hold First Frame',
 					fg: whiteColor,
@@ -202,55 +235,65 @@ exports.getPresets = function () {
 				},
 			},
 		],
-	})
+	}
 
 	/**
 	 * Update
 	 */
-	presets.push({
+	presets['update'] = {
+		type: 'button',
 		category: 'Transport',
-		label: 'Update',
-		bank: {
-			style: 'text',
+		name: 'Update',
+		style: {
 			text: 'Update',
 			size: '18',
 			color: whiteColor,
 			bgcolor: blackColor,
 		},
-		actions: [
+		steps: [
 			{
-				action: 'updatePlaylists',
+				down: [
+					{
+						actionId: 'updatePlaylists',
+					},
+				],
+				up: [],
 			},
 		],
-	})
+	}
 
 	/**
 	 * Clip presets
 	 */
 	for (let playlist = 0; playlist < 2; playlist++) {
 		for (let clip = 0; clip < 20; clip++) {
-			presets.push({
+			presets[`clip_${playlist}_${clip}`] = {
+				type: 'button',
 				category: `Clips (playlist ${playlist})`,
-				label: `Clip ${clip}`,
-				bank: {
-					style: 'text',
+				name: `Clip ${clip}`,
+				style: {
 					text: `$(${this.shorthame}:clip_${playlist}_${clip})`,
 					size: 'auto',
 					color: whiteColor,
 					bgcolor: blackColor,
 				},
-				actions: [
+				steps: [
 					{
-						action: 'pause',
-						options: {
-							playlist: `${playlist}`,
-							clip: `${clip}`,
-						},
+						down: [
+							{
+								actionId: 'pause',
+								options: {
+									playlist: `${playlist}`,
+									clip: `${clip}`,
+								},
+							},
+						],
+						up: [],
 					},
 				],
 				feedbacks: [
 					{
-						type: 'clipStatus',
+						feedbackId: 'clipStatus',
 						options: {
 							playlist: playlist,
 							clip: clip,
@@ -260,7 +303,7 @@ exports.getPresets = function () {
 						},
 					},
 					{
-						type: 'clipStatus',
+						feedbackId: 'clipStatus',
 						options: {
 							playlist: playlist,
 							clip: clip,
@@ -270,7 +313,7 @@ exports.getPresets = function () {
 						},
 					},
 					{
-						type: 'clipStatus',
+						feedbackId: 'clipStatus',
 						options: {
 							playlist: playlist,
 							clip: clip,
@@ -280,7 +323,7 @@ exports.getPresets = function () {
 						},
 					},
 				],
-			})
+			}
 		}
 	}
 

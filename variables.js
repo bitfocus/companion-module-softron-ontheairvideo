@@ -6,62 +6,62 @@ exports.updateVariableDefinitions = function () {
 
 	// playback status vars:
 	variables.push({
-		label: 'Playback status',
-		name: 'playbackStatus',
+		name: 'Playback status',
+		variableId: 'playbackStatus',
 	})
 	variables.push({
-		label: 'Active playlist index',
-		name: 'activePlaylist',
+		name: 'Active playlist index',
+		variableId: 'activePlaylist',
 	})
 	variables.push({
-		label: 'Active playlist name',
-		name: 'activePlaylistName',
+		name: 'Active playlist name',
+		variableId: 'activePlaylistName',
 	})
 	variables.push({
-		label: 'Active playlist duration',
-		name: 'playlistDuration',
+		name: 'Active playlist duration',
+		variableId: 'playlistDuration',
 	})
 	variables.push({
-		label: 'Active playlist elapsed',
-		name: 'playlistElapsed',
+		name: 'Active playlist elapsed',
+		variableId: 'playlistElapsed',
 	})
 	variables.push({
-		label: 'Active playlist remaining',
-		name: 'playlistRemaining',
+		name: 'Active playlist remaining',
+		variableId: 'playlistRemaining',
 	})
 	variables.push({
-		label: 'Active clip index',
-		name: 'activeClip',
+		name: 'Active clip index',
+		variableId: 'activeClip',
 	})
 	variables.push({
-		label: 'Active clip name',
-		name: 'activeClipName',
+		name: 'Active clip name',
+		variableId: 'activeClipName',
 	})
 	variables.push({
-		label: 'Clip duration',
-		name: 'clipDuration',
+		name: 'Clip duration',
+		variableId: 'clipDuration',
 	})
 	variables.push({
-		label: 'Clip elapsed',
-		name: 'clipElapsed',
+		name: 'Clip elapsed',
+		variableId: 'clipElapsed',
 	})
 	variables.push({
-		label: 'Clip remaining',
-		name: 'clipRemaining',
+		name: 'Clip remaining',
+		variableId: 'clipRemaining',
 	})
 
-	this.debug('Build playlist variables.')
+	this.log('debug', 'Build playlist variables.')
 	// playlist variables:
 	this.playlists.forEach((playlist, pIndex) => {
 		// this.debug('Playlist:', playlist)
 		variables.push({
-			label: `Playlist ${pIndex}`,
-			name: `playlist_${pIndex}`,
+			name: `Playlist ${pIndex}`,
+			variableId: `playlist_${pIndex}`,
 		})
 		playlist.clips.forEach((clip, index) => {
 			variables.push({
-				label: `Playlist ${pIndex} Clip ${index}`,
-				name: `clip_${pIndex}_${index}`,
+				name: `Playlist ${pIndex} Clip ${index}`,
+				variableId: `clip_${pIndex}_${index}`,
 			})
 		})
 	})
@@ -74,7 +74,7 @@ exports.updateVariableDefinitions = function () {
  * Update the values of static status variables.
  */
 exports.updateStatusVariables = function (status) {
-	this.setVariable('playbackStatus', status.playback_status)
+	this.setVariableValues({ playbackStatus: status.playback_status })
 	if (status.playlist_index == undefined) {
 		status.playlist_index = '-'
 	}
@@ -118,29 +118,35 @@ exports.updateStatusVariables = function (status) {
 		status.item_remaining_display = '-'
 	}
 
-	this.setVariable('activePlaylist', status.playlist_index)
-	this.setVariable('activePlaylistName', status.playlist_display_name)
-	this.setVariable('activeClip', status.item_index)
-	this.setVariable('activeClipName', status.item_display_name)
-	this.setVariable('playlistDuration', status.playlist_duration_display)
-	this.setVariable('playlistElapsed', status.playlist_elapsed_display)
-	this.setVariable('playlistRemaining', status.playlist_remaining_display)
-	this.setVariable('clipDuration', status.item_duration_display)
-	this.setVariable('clipElapsed', status.item_elapsed_display)
-	this.setVariable('clipRemaining', status.item_remaining_display)
+	this.serVariableValues({
+		activePlaylist: status.playlist_index,
+		activePlaylistName: status.playlist_display_name,
+		activeClip: status.item_index,
+		activeClipName: status.item_display_name,
+		playlistDuration: status.playlist_duration_display,
+		playlistElapsed: status.playlist_elapsed_display,
+		playlistRemaining: status.playlist_remaining_display,
+		clipDuration: status.item_duration_display,
+		clipElapsed: status.item_elapsed_display,
+		clipRemaining: status.item_remaining_display,
+	})
 }
 
 /**
  * Update the values of dynamic playlist variables.
  */
 exports.updatePlaylistVariables = function () {
+	let list = {}
 	this.playlists.forEach((playlist, pIndex) => {
 		// this.debug('Playlist:', playlist);
-		this.setVariable(`playlist_${pIndex}`, playlist.label)
+		list[`playlist_${pIndex}`] = playlist.label
+		//	this.setVariable(`playlist_${pIndex}`, playlist.label)
 		playlist.clips.forEach((clip, index) => {
-			this.setVariable(`clip_${pIndex}_${index}`, clip)
+			list[`clip_${pIndex}_${index}`] = clip
+			//		this.setVariable(`clip_${pIndex}_${index}`, clip)
 		})
 	})
+	this.setVariableValues(list)
 }
 
 renderTime = function (seconds) {

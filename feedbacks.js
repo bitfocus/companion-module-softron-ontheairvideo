@@ -1,68 +1,56 @@
+const { Regex, combineRgb } = require('@companion-module/base')
+const { CHOICES_PLAYBACKSTATUS, CHOICES_CLIP_PLAYLIST } = require('./choices')
+
 exports.initFeedbacks = function () {
 	const feedbacks = {}
 
-	const foregroundColor = {
-		type: 'colorpicker',
-		label: 'Foreground colour',
-		id: 'fg',
-		default: this.rgb(255, 255, 255),
+	const stylePlaying = {
+		color: combineRgb(255, 255, 255),
+		bgcolor: combineRgb(0, 204, 0),
 	}
 
-	const backgroundColorPlaying = {
-		type: 'colorpicker',
-		label: 'Background colour',
-		id: 'bg',
-		default: this.rgb(0, 204, 0),
+	const stylePaused = {
+		color: combineRgb(255, 255, 255),
+		bgcolor: combineRgb(255, 255, 0),
 	}
 
-	const backgroundColorPaused = {
-		type: 'colorpicker',
-		label: 'Background colour',
-		id: 'bg',
-		default: this.rgb(255, 255, 0),
+	const styleStopped = {
+		color: combineRgb(255, 255, 255),
+		bgcolor: combineRgb(255, 0, 0),
 	}
 
-	const backgroundColorStopped = {
-		type: 'colorpicker',
-		label: 'Background colour',
-		id: 'bg',
-		default: this.rgb(255, 0, 0),
+	const styleActive = {
+		color: combineRgb(255, 255, 255),
+		bgcolor: combineRgb(0, 51, 204),
 	}
 
-	const backgroundColorActive = {
-		type: 'colorpicker',
-		label: 'Background colour',
-		id: 'bg',
-		default: this.rgb(0, 51, 204),
-	}
-	
 	const styleRemaining = {
-		bgcolor: this.rgb(255, 128, 0),
+		color: combineRgb(255, 255, 255),
+		bgcolor: combineRgb(255, 128, 0),
 	}
 
 	feedbacks.playbackStatus = {
-		label: 'Playback status',
-		description: 'Set colour based on status (playing, paused, stopped)',
+		name: 'Playback status',
+		type: 'boolean',
+		description: 'Set feedback based on status (playing, paused, stopped)',
 		options: [
 			{
 				type: 'dropdown',
 				label: 'Status',
 				id: 'status',
-				choices: this.CHOICES_PLAYBACKSTATUS,
+				choices: CHOICES_PLAYBACKSTATUS,
 			},
-			foregroundColor,
-			backgroundColorPlaying,
 		],
-		callback: ({ options }, bank) => {
-			if (options.status === this.playing.playback_status) {
-				return { color: options.fg, bgcolor: options.bg }
-			}
+		defaultStyle: stylePlaying,
+		callback: ({ options }) => {
+			return options.status === this.playing.playback_status
 		},
 	}
 
 	feedbacks.clipActive = {
-		label: 'Active clip',
-		description: 'Set colour when a specific clip is active',
+		name: 'Active clip',
+		type: 'boolean',
+		description: 'Set feedback when a specific clip is active',
 		options: [
 			{
 				type: 'textinput',
@@ -70,7 +58,7 @@ exports.initFeedbacks = function () {
 				id: 'playlist',
 				tooltip: 'Enter an index (zero based) or name of a playlist',
 				default: '0',
-				regex: this.REGEX_SOMETHING,
+				regex: Regex.SOMETHING,
 			},
 			{
 				type: 'textinput',
@@ -78,24 +66,22 @@ exports.initFeedbacks = function () {
 				id: 'clip',
 				tooltip: 'Enter an index (zero based) or name of a clip',
 				defauls: '0',
-				regex: this.REGEX_SOMETHING,
+				regex: Regex.SOMETHING,
 			},
-			foregroundColor,
-			backgroundColorActive,
 		],
-		callback: ({ options }, bank) => {
-			if (
+		defaultStyle: styleActive,
+		callback: ({ options }) => {
+			return (
 				(options.playlist == this.playing.playlist_index || options.playlist == this.playing.playlist_display_name) &&
 				(options.clip == this.playing.item_index || options.clip == this.playing.item_display_name)
-			) {
-				return { color: options.fg, bgcolor: options.bg }
-			}
+			)
 		},
 	}
 
 	feedbacks.clipStatus = {
-		label: 'Active clip, with status',
-		description: 'Set colour based on status of a specific clip',
+		name: 'Active clip, with status',
+		type: 'boolean',
+		description: 'Set feedback based on status of a specific clip',
 		options: [
 			{
 				type: 'textinput',
@@ -103,7 +89,7 @@ exports.initFeedbacks = function () {
 				id: 'playlist',
 				tooltip: 'Enter an index (zero based) or name of a playlist',
 				default: '0',
-				regex: this.REGEX_SOMETHING,
+				regex: Regex.SOMETHING,
 			},
 			{
 				type: 'textinput',
@@ -111,31 +97,28 @@ exports.initFeedbacks = function () {
 				id: 'clip',
 				tooltip: 'Enter an index (zero based) or name of a clip',
 				defauls: '0',
-				regex: this.REGEX_SOMETHING,
+				regex: Regex.SOMETHING,
 			},
 			{
 				type: 'dropdown',
 				label: 'Status',
 				id: 'status',
-				choices: this.CHOICES_PLAYBACKSTATUS,
+				choices: CHOICES_PLAYBACKSTATUS,
 			},
-			foregroundColor,
-			backgroundColorActive,
 		],
-		callback: ({ options }, bank) => {
-			if (
+		defaultStyle: styleActive,
+		callback: ({ options }) => {
+			return (
 				(options.playlist == this.playing.playlist_index || options.playlist == this.playing.playlist_display_name) &&
 				(options.clip == this.playing.item_index || options.clip == this.playing.item_display_name) &&
 				options.status == this.playing.playback_status
-			) {
-				return { color: options.fg, bgcolor: options.bg }
-			}
+			)
 		},
 	}
-	
+
 	feedbacks.timeRemaining = {
+		name: 'Time remaining',
 		type: 'boolean',
-		label: 'Time remaining',
 		description: 'Set feedback when a specified amount of time remains in the clip/playlist',
 		options: [
 			{
@@ -143,7 +126,7 @@ exports.initFeedbacks = function () {
 				label: 'Clip/Playlist',
 				id: 'type',
 				default: 'clip',
-				choices: this.CHOICES_CLIP_PLAYLIST,
+				choices: CHOICES_CLIP_PLAYLIST,
 			},
 			{
 				type: 'number',
@@ -157,20 +140,20 @@ exports.initFeedbacks = function () {
 		],
 		style: styleRemaining,
 		callback: ({ options }, bank) => {
-			if (this.playing.item_playback_status == 'playing'||'paused') {
+			if (this.playing.item_playback_status == 'playing' || 'paused') {
 				switch (options.type) {
 					case 'clip':
 						if (Math.floor(this.playing.item_remaining) <= options.time) {
 							return true
 						}
-						break;
+						break
 					case 'playlist':
 						if (Math.floor(this.playing.playlist_remaining) <= options.time) {
 							return true
 						}
 				}
 			}
-		}
+		},
 	}
 
 	return feedbacks

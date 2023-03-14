@@ -1,38 +1,38 @@
-const instance_skel = require('../../instance_skel')
+const { runEntrypoint, InstanceBase, InstanceStatus, Regex } = require('@companion-module/base')
 const actions = require('./actions')
 const presets = require('./presets')
-const { updateVariableDefinitions, updateStatusVariables, updatePlaylistVariables } = require('./variables')
-const { initFeedbacks } = require('./feedbacks')
+const variables = require('./variables')
+const feedbacks = require('./feedbacks')
+const { upgradeScripts } = require('./upgrades')
 
-let debug
 let log
 
 /**
  * Companion instance class for the Softron OnTheAir Vidoe software playout API.
  *
- * @extends instance_skel
+ * @extends InstanceBase
  * @version 1.0.0
  * @since 1.0.0
  * @author Stephen Harrison <stephen@redleopard.org>
  */
-class instance extends instance_skel {
+class OnTheAirVideoInstance extends InstanceBase {
 	/**
 	 * Main constructor
-	 * @param  {} system
-	 * @param  {} id
-	 * @param  {} config
+	 * @since 1.0.0
 	 */
-	constructor(system, id, config) {
-		super(system, id, config)
+	constructor(internal) {
+		super(internal)
 
 		Object.assign(this, {
 			...actions,
 			...presets,
+			...variables,
+			...feedbacks,
 		})
 
-		this.updateVariableDefinitions = updateVariableDefinitions
-		this.updateStatusVariables = updateStatusVariables
-		this.updatePlaylistVariables = updatePlaylistVariables
+		//	this.updateVariableDefinitions = updateVariableDefinitions
+		//	this.updateStatusVariables = updateStatusVariables
+		//	this.updatePlaylistVariables = updatePlaylistVariables
 
 		this.playlists = []
 		this.playing = {}
@@ -43,24 +43,6 @@ class instance extends instance_skel {
 		this.testingActive = 0
 		this.testInterval = 10000
 		this.pollUrl = ``
-
-		this.CHOICES_PLAYBACKSTATUS = [
-			{ id: 'Playing', label: 'Playing' },
-			{ id: 'Paused', label: 'Paused' },
-			{ id: 'Stopped', label: 'Stopped' },
-			{ id: 'Hold First Frame', label: 'Hold First Frame' },
-		]
-
-		this.CHOICES_POSITIONTYPE = [
-			{ id: 'relativeTimecode', label: 'Relative Timecode' },
-			{ id: 'mediaTimecode', label: 'Media Timecode' },
-			{ id: 'relativeSeconds', label: 'Relative Seconds' },
-		]
-		
-		this.CHOICES_CLIP_PLAYLIST = [
-			{ id: 'clip', label: 'Clip' },
-			{ id: 'playlist', label: 'Playlist' },
-		]
 	}
 
 	/**
@@ -70,14 +52,14 @@ class instance extends instance_skel {
 	 * @access public
 	 * @since 1.0.0
 	 */
-	config_fields() {
+	getConfigFields() {
 		return [
 			{
 				type: 'textinput',
 				id: 'host',
 				label: 'Target IP',
 				width: 6,
-				regex: this.REGEX_IP,
+				regex: Regex.IP,
 			},
 			{
 				type: 'number',
@@ -96,8 +78,8 @@ class instance extends instance_skel {
 	 * @access public
 	 * @since 1.0.0
 	 */
-	destroy() {
-		this.debug('destroy', this.id)
+	async destroy() {
+		this.log('debug', `destroy ${his.id}`)
 	}
 
 	/**
@@ -107,17 +89,18 @@ class instance extends instance_skel {
 	 * @access public
 	 * @since 1.0.0
 	 */
-	init() {
-		debug = this.debug
+	async init(config) {
+		this.config = config
+		//	debug = this.debug
 		log = this.log
 
-		this.status(this.STATUS_WARNING, 'Waiting') // status not currently known
+		this.updateStatus(InstanceStatus.Connecting, 'Waiting') // status not currently known
 
 		//Test the connection with a status request
 		//		this.sendGetRequest(`playback/playing`);
 
 		this.getPlaylists()
-		this.actions() // Set the actions after info is retrieved
+		this.initActions() // Set the actions after info is retrieved
 		this.initVariables()
 		this.initFeedbacks()
 		this.initPresets()
@@ -155,107 +138,8 @@ class instance extends instance_skel {
 	 * Set all the actions
 	 * @param  {} system
 	 */
-	actions(system) {
-		this.setActions(this.getActions())
-	}
-
-	/**
-	 * Process all executed actions (by user)
-	 * @param  {} action
-	 */
-	action(action) {
-		let id = action.action
-		let opt = action.options
-		let cmd = ''
-		switch (id) {
-			case 'play':
-				if (opt.playlist == '') {
-					cmd = `playback/play`
-				} else {
-					if (opt.clip !== '') {
-						cmd = `playlists/${opt.playlist}/items/${opt.clip}/play`
-					} else {
-						cmd = `playlists/${opt.playlist}/play`
-					}
-				}
-				break
-			case 'playPosition':
-				switch (opt.type) {
-					case 'relativeTimecode':
-						cmd = `playlists/${opt.playlist}/items/${opt.clip}/play?position_relative_timecode=${opt.position}`
-						break
-					case 'mediaTimecode':
-						cmd = `playlists/${opt.playlist}/items/${opt.clip}/play?position_media_timecode=${opt.position}`
-						break
-					case 'relativeSeconds':
-						cmd = `playlists/${opt.playlist}/items/${opt.clip}/play?position_relative_seconds=${opt.position}`
-						break
-				}
-				break
-			case 'pause':
-				if (opt.playlist == '') {
-					cmd = `playback/pause`
-				} else {
-					if (opt.clip !== '') {
-						cmd = `playlists/${opt.playlist}/items/${opt.clip}/pause`
-					} else {
-						cmd = `playlists/${opt.playlist}/pause`
-					}
-				}
-				break
-			case 'pausePosition':
-				switch (opt.type) {
-					case 'relativeTimecode':
-						cmd = `playlists/${opt.playlist}/items/${opt.clip}/pause?position_relative_timecode=${opt.position}`
-						break
-					case 'mediaTimecode':
-						cmd = `playlists/${opt.playlist}/items/${opt.clip}/pause?position_media_timecode=${opt.position}`
-						break
-					case 'relativeSeconds':
-						cmd = `playlists/${opt.playlist}/items/${opt.clip}/pause?position_relative_seconds=${opt.position}`
-						break
-				}
-				break
-			case 'resume':
-				if (opt.playlist == '') {
-					cmd = `playback/resume`
-				} else {
-					cmd = `playlists/${opt.playlist}/resume`
-				}
-				break
-			case 'stop':
-				if (opt.playlist == '') {
-					cmd = `playback/stop`
-				} else {
-					cmd = `playlists/${opt.playlist}/stop`
-				}
-				break
-			case 'skipNext':
-				if (opt.playlist == '') {
-					cmd = `playback/skip_next`
-				} else {
-					cmd = `playlists/${opt.playlist}/skip_next`
-				}
-				break
-			case 'skipPrevious':
-				if (opt.playlist == '') {
-					cmd = `playback/skip_previous`
-				} else {
-					cmd = `playlists/${opt.playlist}/skip_previous`
-				}
-				break
-			case 'gotoEndMinus':
-				if (this.playing.item_playback_status == 'playing'||'paused') {
-					const mode = (this.playing.item_playback_status == 'playing') ? 'play' : 'pause'
-					const time = this.playing.item_duration - opt.tMinus
-					cmd = `playlists/${this.playing.playlist_index}/items/${this.playing.item_index}/${mode}?position_relative_seconds=${time}`
-				}
-			case 'updatePlaylists':
-				this.getPlaylists()
-				break
-		}
-
-		this.sendGetRequest(cmd) // Execute command
+	initActions(system) {
+		this.setActionDefinitions(this.getActions())
 	}
 
 	/**
@@ -267,10 +151,10 @@ class instance extends instance_skel {
 	 * @since 1.0.0
 	 */
 	setupConnectivtyTester() {
-		debug('Setup Connectivity Tester!!!!!!')
+		log('debug', 'Setup Connectivity Tester!')
 		this.errorCount = 0
 		this.pollingActive = 0
-		this.pollUrl = `http://${this.config.host}:${this.config.port}/playback/playing
+		this.pollUrl = `http://${this.config.host}:${this.config.port}/playback/playing`
 		this.system.emit('rest_poll_destroy', this.id)
 
 		this.system.emit(
@@ -284,7 +168,7 @@ class instance extends instance_skel {
 					this.testingActive = 1
 				} else {
 					this.currentInterval = {}
-					this.status(this.STATUS_ERROR, 'Connectivity Failed')
+					this.updateStatus(InstanceStatus.ConnectionFailure, 'Connectivity Failed')
 					this.log('error', 'Failed to create connectivity interval timer')
 				}
 			},
@@ -314,7 +198,7 @@ class instance extends instance_skel {
 					this.currentInterval = pollInstance
 					this.pollingActive = 1
 				} else {
-					this.status(this.STATUS_ERROR, 'Polling Failed')
+					this.updateStatus(InstanceStatus.ConnectionFailure, 'Polling Failed')
 					this.log('error', 'Failed to create polling interval timer')
 				}
 			},
@@ -322,17 +206,17 @@ class instance extends instance_skel {
 		)
 	}
 
-	updateConfig(config) {
+	async configUpdated(config) {
 		let resetConnection = false
 
-		this.debug('Updating config:', config)
+		log('debug', `Updating config: ${config}`)
 		if (this.config.host != config.host) {
 			resetConnection = true
 		}
 		this.config = config
-		debug('Reset connection', resetConnection)
+		log('debug', `Reset connection ${resetConnection}`)
 		if (resetConnection === true) {
-			this.status(this.STATUS_WARNING, 'Waiting…')
+			this.updateStatus(InstanceStatus.Connecting, 'Waiting…')
 			this.setupConnectivtyTester()
 		}
 	}
@@ -370,9 +254,9 @@ class instance extends instance_skel {
 			} else {
 				this.log('error', 'general HTTP failure')
 			}
-			this.status(this.STATUS_ERROR, 'NOT CONNECTED')
+			this.updateStatus(InstanceStatus.Disconnected, 'NOT CONNECTED')
 			if (this.pollingActive === 1) {
-				debug('Error Count:', this.errorCount)
+				log('debug', `Error Count: ${this.errorCount}`)
 				this.errorCount++
 			}
 			if (this.errorCount > 10) {
@@ -381,38 +265,36 @@ class instance extends instance_skel {
 		} else {
 			switch (result.response.statusCode) {
 				case 200: // OK
-					this.status(this.STATUS_OK)
+					this.updateStatus(InstanceStatus.Ok)
 					if (this.testingActive === 1) {
 						this.setupPolling()
 					}
 					this.processData200(decodeURI(result.response.req.path), result.data)
 					break
 				case 201: // Created
-					this.status(this.STATUS_OK)
-					this.log('debug', 'Created: ' + result.data.error)
-					this.debug('Created: ', result.data.error)
+					this.updateStatus(InstanceStatus.Ok)
+					this.log('debug', `Created: ${result.data.error}`)
 					break
 				case 202: // Accepted
-					this.status(this.STATUS_OK)
-					this.log('debug', 'Accepted: ' + result.data.error)
-					this.debug('Accepted: ', result.data.error)
+					this.updateStatus(InstanceStatus.Ok)
+					this.log('debug', `Accepted: ${result.data.error}`)
 					break
 				case 400: // Bad Request
-					this.status(this.STATUS_WARNING, 'Bad request: ' + result.data.error)
+					this.updateStatus(InstanceStatus.BadConfig, 'Bad request: ' + result.data.error)
 					this.log('warning', 'Bad request: ' + result.data.error)
 					break
 				case 404: // Not found
-					this.status(this.STATUS_WARNING, 'Not found: ' + result.data.error)
+					this.updateStatus(InstanceStatus.UnknownError, 'Not found: ' + result.data.error)
 					this.log('warning', 'Not found: ' + result.data.error)
 					break
 				case 422: // Unprocessable entity
-					this.status(this.STATUS_WARNING, 'Unprocessable entity: ' + result.data.error)
+					this.updateStatus(InstanceStatus.UnknownError, 'Unprocessable entity: ' + result.data.error)
 					this.log('warning', 'Unprocessable entity: ' + result.data.error)
 					break
 				default:
 					// Unexpenses response
-					this.status(this.STATUS_ERROR, 'Unexpected HTTP status code: ' + result.response.statusCode)
-					this.log('error', 'Unxspected HTTP status code: ' + result.response.statusCode)
+					this.updateStatus(InstanceStatus.UnknownError, 'Unexpected HTTP status code: ' + result.response.statusCode)
+					this.log('error', 'Unexpected HTTP status code: ' + result.response.statusCode)
 					break
 			}
 		}
@@ -451,4 +333,4 @@ class instance extends instance_skel {
 	}
 }
 
-exports = module.exports = instance
+runEntrypoint(OnTheAirVideoInstance, upgradeScripts)

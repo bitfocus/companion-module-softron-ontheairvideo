@@ -30,11 +30,11 @@ Allows you to connect and control OnTheAir Video available from Softron Media Se
 - Clip time elapsed
 - Clip time remaining
 - For each playlist:
- - Playlist name
- - Clip names for each clip
- - Playlist duration
- - Playlist time elapsed
- - Playlist time remaining
+- Playlist name
+- Clip names for each clip
+- Playlist duration
+- Playlist time elapsed
+- Playlist time remaining
 
 ### Usage
 
