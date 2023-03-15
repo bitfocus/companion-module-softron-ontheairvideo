@@ -1,11 +1,10 @@
-const { runEntrypoint, InstanceBase, InstanceStatus, Regex } = require('@companion-module/base')
-const actions = require('./actions')
-const presets = require('./presets')
-const variables = require('./variables')
-const feedbacks = require('./feedbacks')
-const { upgradeScripts } = require('./upgrades')
-
-let log
+import { runEntrypoint, InstanceBase, InstanceStatus, Regex } from '@companion-module/base'
+import { getActions } from './actions.js'
+import { getPresets } from './presets.js'
+import { updateVariableDefinitions, updateStatusVariables, updatePlaylistVariables } from './variables.js'
+import { initFeedbacks } from './feedbacks.js'
+import { upgradeScripts } from './upgrades.js'
+import got from 'got'
 
 /**
  * Companion instance class for the Softron OnTheAir Vidoe software playout API.
@@ -22,13 +21,6 @@ class OnTheAirVideoInstance extends InstanceBase {
 	 */
 	constructor(internal) {
 		super(internal)
-
-		Object.assign(this, {
-			...actions,
-			...presets,
-			...variables,
-			...feedbacks,
-		})
 
 		//	this.updateVariableDefinitions = updateVariableDefinitions
 		//	this.updateStatusVariables = updateStatusVariables
@@ -92,20 +84,19 @@ class OnTheAirVideoInstance extends InstanceBase {
 	async init(config) {
 		this.config = config
 		//	debug = this.debug
-		log = this.log
+//	log = this.log
 
 		this.updateStatus(InstanceStatus.Connecting, 'Waiting') // status not currently known
 
 		//Test the connection with a status request
 		//		this.sendGetRequest(`playback/playing`);
-
+		await this.setupConnectivtyTester()
+		
 		this.getPlaylists()
 		this.initActions() // Set the actions after info is retrieved
 		this.initVariables()
 		this.initFeedbacks()
 		this.initPresets()
-
-		this.setupConnectivtyTester()
 	}
 
 	/**
@@ -150,30 +141,39 @@ class OnTheAirVideoInstance extends InstanceBase {
 	 * @private
 	 * @since 1.0.0
 	 */
-	setupConnectivtyTester() {
-		log('debug', 'Setup Connectivity Tester!')
+	async setupConnectivtyTester() {
+		this.log('debug', 'Setup Connectivity Tester!')
 		this.errorCount = 0
 		this.pollingActive = 0
 		this.pollUrl = `http://${this.config.host}:${this.config.port}/playback/playing`
-		this.system.emit('rest_poll_destroy', this.id)
+//	this.system.emit('rest_poll_destroy', this.id)
 
-		this.system.emit(
-			'rest_poll_get',
-			this.id,
-			this.testInterval,
-			this.pollUrl,
-			(err, pollInstance) => {
-				if (pollInstance.id !== undefined) {
-					this.currentInterval = pollInstance
-					this.testingActive = 1
-				} else {
-					this.currentInterval = {}
-					this.updateStatus(InstanceStatus.ConnectionFailure, 'Connectivity Failed')
-					this.log('error', 'Failed to create connectivity interval timer')
-				}
-			},
-			this.processResult.bind(this)
-		)
+		try {
+			const {response} = await got(this.pollUrl).json()
+			this.log('debug', response.statusCode)
+			this.processResult(response)
+		}  catch (error) {
+			console.log(error)
+			this.processResult(error)
+		}
+		
+//	this.system.emit(
+//		'rest_poll_get',
+//		this.id,
+//		this.testInterval,
+//		this.pollUrl,
+//		(err, pollInstance) => {
+//			if (pollInstance.id !== undefined) {
+//				this.currentInterval = pollInstance
+//				this.testingActive = 1
+//			} else {
+//				this.currentInterval = {}
+//				this.updateStatus(InstanceStatus.ConnectionFailure, 'Connectivity Failed')
+//				this.log('error', 'Failed to create connectivity interval timer')
+//			}
+//		},
+//		this.processResult.bind(this)
+//	)
 	}
 
 	/**
@@ -186,35 +186,36 @@ class OnTheAirVideoInstance extends InstanceBase {
 		this.errorCount = 0
 		this.testingActive = 0
 		this.pollUrl = `http://${this.config.host}:${this.config.port}/playback/playing`
-		this.system.emit('rest_poll_destroy', this.id)
+//	this.system.emit('rest_poll_destroy', this.id)
+		
 
-		this.system.emit(
-			'rest_poll_get',
-			this.id,
-			parseInt(this.pollingInterval),
-			this.pollUrl,
-			(err, pollInstance) => {
-				if (pollInstance.id !== undefined) {
-					this.currentInterval = pollInstance
-					this.pollingActive = 1
-				} else {
-					this.updateStatus(InstanceStatus.ConnectionFailure, 'Polling Failed')
-					this.log('error', 'Failed to create polling interval timer')
-				}
-			},
-			this.processResult.bind(this)
-		)
+//	this.system.emit(
+//		'rest_poll_get',
+//		this.id,
+//		parseInt(this.pollingInterval),
+//		this.pollUrl,
+//		(err, pollInstance) => {
+//			if (pollInstance.id !== undefined) {
+//				this.currentInterval = pollInstance
+//				this.pollingActive = 1
+//			} else {
+//				this.updateStatus(InstanceStatus.ConnectionFailure, 'Polling Failed')
+//				this.log('error', 'Failed to create polling interval timer')
+//			}
+//		},
+//		this.processResult.bind(this)
+//	)
 	}
 
 	async configUpdated(config) {
 		let resetConnection = false
 
-		log('debug', `Updating config: ${config}`)
+		this.log('debug', `Updating config: ${config}`)
 		if (this.config.host != config.host) {
 			resetConnection = true
 		}
 		this.config = config
-		log('debug', `Reset connection ${resetConnection}`)
+		this.log('debug', `Reset connection ${resetConnection}`)
 		if (resetConnection === true) {
 			this.updateStatus(InstanceStatus.Connecting, 'Waiting…')
 			this.setupConnectivtyTester()
@@ -234,9 +235,16 @@ class OnTheAirVideoInstance extends InstanceBase {
 	 * Send a REST GET request to the player and handle errorcodes
 	 * @param  {} cmd
 	 */
-	sendGetRequest(cmd) {
+	async sendGetRequest(cmd) {
 		let url = `http://${this.config.host}:${this.config.port}/${cmd}`
-		this.system.emit('rest_get', url, this.processResult.bind(this))
+//	this.system.emit('rest_get', url, this.processResult.bind(this))
+		try {
+			const response = await got(url).json()
+			console.log(response.body)
+		}  catch (error) {
+			console.log(error.response)
+			this.processResult(error)
+		}
 	}
 
 	/**
@@ -247,56 +255,41 @@ class OnTheAirVideoInstance extends InstanceBase {
 	 * @private
 	 * @since 1.0.0
 	 */
-	processResult(err, result) {
-		if (err !== null) {
-			if (result.error.code !== undefined) {
-				this.log('error', 'Connection failed (' + result.error.code + ')')
-			} else {
-				this.log('error', 'general HTTP failure')
-			}
-			this.updateStatus(InstanceStatus.Disconnected, 'NOT CONNECTED')
-			if (this.pollingActive === 1) {
-				log('debug', `Error Count: ${this.errorCount}`)
-				this.errorCount++
-			}
-			if (this.errorCount > 10) {
-				this.setupConnectivtyTester()
-			}
-		} else {
-			switch (result.response.statusCode) {
-				case 200: // OK
-					this.updateStatus(InstanceStatus.Ok)
-					if (this.testingActive === 1) {
-						this.setupPolling()
-					}
-					this.processData200(decodeURI(result.response.req.path), result.data)
-					break
-				case 201: // Created
-					this.updateStatus(InstanceStatus.Ok)
-					this.log('debug', `Created: ${result.data.error}`)
-					break
-				case 202: // Accepted
-					this.updateStatus(InstanceStatus.Ok)
-					this.log('debug', `Accepted: ${result.data.error}`)
-					break
-				case 400: // Bad Request
-					this.updateStatus(InstanceStatus.BadConfig, 'Bad request: ' + result.data.error)
-					this.log('warning', 'Bad request: ' + result.data.error)
-					break
-				case 404: // Not found
-					this.updateStatus(InstanceStatus.UnknownError, 'Not found: ' + result.data.error)
-					this.log('warning', 'Not found: ' + result.data.error)
-					break
-				case 422: // Unprocessable entity
-					this.updateStatus(InstanceStatus.UnknownError, 'Unprocessable entity: ' + result.data.error)
-					this.log('warning', 'Unprocessable entity: ' + result.data.error)
-					break
-				default:
-					// Unexpenses response
-					this.updateStatus(InstanceStatus.UnknownError, 'Unexpected HTTP status code: ' + result.response.statusCode)
-					this.log('error', 'Unexpected HTTP status code: ' + result.response.statusCode)
-					break
-			}
+	processResult(response) {
+		console.log(`Response statusCode: ${response.statusCode}`)
+		switch (response.statusCode) {
+			case 200: // OK
+				this.updateStatus(InstanceStatus.Ok)
+				if (this.testingActive === 1) {
+					this.setupPolling()
+				}
+//				this.processData200(decodeURI(result.response.req.path), result.data)
+				break
+			case 201: // Created
+				this.updateStatus(InstanceStatus.Ok)
+				this.log('debug', `Created: ${result.data.error}`)
+				break
+			case 202: // Accepted
+				this.updateStatus(InstanceStatus.Ok)
+				this.log('debug', `Accepted: ${result.data.error}`)
+				break
+			case 400: // Bad Request
+				this.updateStatus(InstanceStatus.BadConfig, 'Bad request: ' + result.data.error)
+				this.log('warning', 'Bad request: ' + result.data.error)
+				break
+			case 404: // Not found
+				this.updateStatus(InstanceStatus.UnknownError, 'Not found: ' + result.data.error)
+				this.log('warning', 'Not found: ' + result.data.error)
+				break
+			case 422: // Unprocessable entity
+				this.updateStatus(InstanceStatus.UnknownError, 'Unprocessable entity: ' + result.data.error)
+				this.log('warning', 'Unprocessable entity: ' + result.data.error)
+				break
+			default:
+				// Unexpenses response
+				this.updateStatus(InstanceStatus.UnknownError, 'Unexpected HTTP status code: ' + response.statusCode)
+				this.log('error', 'Unexpected HTTP status code: ' + response.statusCode)
+				break
 		}
 	}
 
@@ -330,6 +323,35 @@ class OnTheAirVideoInstance extends InstanceBase {
 			}
 			this.updateVariableDefinitions() // Refresh the variables
 		}
+	}
+	
+	/**
+	 * Process REST errors
+	 * @since 2.0.0
+	 */
+	processError(err) {
+		if (err !== null) {
+			if (result.error.code !== undefined) {
+				this.log('error', 'Connection failed (' + result.error.code + ')')
+			} else {
+				this.log('error', 'general HTTP failure')
+			}
+			this.updateStatus(InstanceStatus.Disconnected, 'NOT CONNECTED')
+			if (this.pollingActive === 1) {
+				this.log('debug', `Error Count: ${this.errorCount}`)
+				this.errorCount++
+			}
+			if (this.errorCount > 10) {
+				this.setupConnectivtyTester()
+			}
+		}
+	}
+	
+	/**
+	 * Maintain a polling connection to the target system
+	 */
+	_restPolling(url, duration) {
+		
 	}
 }
 

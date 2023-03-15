@@ -2,6 +2,7 @@
 	"name": "softron-ontheairvideo",
 	"version": "2.0.0",
 	"main": "index.js",
+	"type": "module",
 	"scripts": {
 		"test": "echo \"Error: no test specified\" && exit 1",
 		"format": "prettier -w ."
@@ -12,7 +13,8 @@
 		"url": "git+https://github.com/bitfocus/companion-module-softron-ontheairvideo.git"
 	},
 	"dependencies": {
-		"@companion-module/base": "~1.1.1"
+		"@companion-module/base": "~1.1.1",
+		"got": "~12.6.0"
 	},
 	"devDependencies": {
 		"@companion-module/tools": "^1.0.0"

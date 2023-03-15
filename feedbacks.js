@@ -1,7 +1,7 @@
-const { Regex, combineRgb } = require('@companion-module/base')
-const { CHOICES_PLAYBACKSTATUS, CHOICES_CLIP_PLAYLIST } = require('./choices')
+import { Regex, combineRgb } from '@companion-module/base'
+import { CHOICES_PLAYBACKSTATUS, CHOICES_CLIP_PLAYLIST } from './choices.js'
 
-exports.initFeedbacks = function () {
+export function initFeedbacks() {
 	const feedbacks = {}
 
 	const stylePlaying = {

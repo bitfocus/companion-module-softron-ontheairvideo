@@ -1,6 +1,6 @@
-const { CHOICES_POSITIONTYPE } = require('./choices')
+import { CHOICES_POSITIONTYPE } from './choices.js'
 
-exports.getActions = function () {
+export function getActions() {
 	const actions = {}
 
 	actions['play'] = {
@@ -220,7 +220,7 @@ exports.getActions = function () {
 		},
 	}
 	actions['stop'] = {
-		label: 'Stop',
+		name: 'Stop',
 		options: [
 			{
 				type: 'textinput',
@@ -268,7 +268,7 @@ exports.getActions = function () {
 		},
 	}
 	actions['skipPrevious'] = {
-		label: 'Skip to previous clip',
+		name: 'Skip to previous clip',
 		options: [
 			{
 				type: 'textinput',
@@ -304,7 +304,7 @@ exports.getActions = function () {
 		},
 	}
 	actions['updatePlaylists'] = {
-		label: 'Update playlist info',
+		name: 'Update playlist info',
 		options: [],
 		callback: async (event) => {
 			this.getPlaylists()

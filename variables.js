@@ -1,7 +1,7 @@
 /**
  * Update the available static and dynamic variable definitions.
  */
-exports.updateVariableDefinitions = function () {
+export function updateVariableDefinitions() {
 	const variables = []
 
 	// playback status vars:
@@ -73,7 +73,7 @@ exports.updateVariableDefinitions = function () {
 /**
  * Update the values of static status variables.
  */
-exports.updateStatusVariables = function (status) {
+export function updateStatusVariables(status) {
 	this.setVariableValues({ playbackStatus: status.playback_status })
 	if (status.playlist_index == undefined) {
 		status.playlist_index = '-'
@@ -135,7 +135,7 @@ exports.updateStatusVariables = function (status) {
 /**
  * Update the values of dynamic playlist variables.
  */
-exports.updatePlaylistVariables = function () {
+export function updatePlaylistVariables() {
 	let list = {}
 	this.playlists.forEach((playlist, pIndex) => {
 		// this.debug('Playlist:', playlist);
@@ -149,7 +149,7 @@ exports.updatePlaylistVariables = function () {
 	this.setVariableValues(list)
 }
 
-renderTime = function (seconds) {
+function renderTime(seconds) {
 	let time = new Date(null)
 	time.setSeconds(seconds)
 	let timeStr = time.toISOString().substr(11, 8)

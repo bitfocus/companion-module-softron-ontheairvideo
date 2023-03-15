@@ -1,6 +1,6 @@
-const { CreateConvertToBooleanFeedbackUpgradeScript } = require('@companion-module/base')
+import { CreateConvertToBooleanFeedbackUpgradeScript } from '@companion-module/base'
 
-module.exports.upgradeScripts = [
+export const upgradeScripts = [
 	CreateConvertToBooleanFeedbackUpgradeScript({
 		playbackStatus: true,
 		clipActive: true,
