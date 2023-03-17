@@ -1,7 +1,7 @@
 ## Softron OnTheAir Video
 
 Allows you to connect and control OnTheAir Video available from Softron Media Services.
-(The API is only available on the full version on OnTheAir Video; this does not work with the _Express_ version). Connects using port 8081.
+(The API is only available on the full version on OnTheAir Video. from version 4; this does not work with the _Express_ version)
 
 ### Supported commands
 
@@ -13,6 +13,7 @@ Allows you to connect and control OnTheAir Video available from Softron Media Se
 - Stop
 - Skip to next clip
 - Skip to previous clip
+- Goto T-n seconds of the current clip
 - Update list of playlists and clips
 
 ### Supported feedback
@@ -20,6 +21,7 @@ Allows you to connect and control OnTheAir Video available from Softron Media Se
 - Playback status
 - Active clip
 - Active clip, with status
+- Time remaining
 
 ### Supported button variables
 
