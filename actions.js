@@ -40,7 +40,7 @@ export function getActions() {
 					cmd = `playlists/${playlist}/play`
 				}
 			}
-			await sendGetRequest(cmd)
+			await this.sendGetRequest(cmd)
 		},
 	}
 	actions['playPosition'] = {
@@ -96,7 +96,7 @@ export function getActions() {
 					cmd = `playlists/${playlist}/items/${clip}/play?position_relative_seconds=${position}`
 					break
 			}
-			await sendGetRequest(cmd)
+			await this.sendGetRequest(cmd)
 		},
 	}
 	actions['pause'] = {
@@ -136,7 +136,7 @@ export function getActions() {
 					cmd = `playlists/${playlist}/pause`
 				}
 			}
-			await sendGetRequest(cmd)
+			await this.sendGetRequest(cmd)
 		},
 	}
 	actions['pausePosition'] = {
@@ -192,7 +192,7 @@ export function getActions() {
 					cmd = `playlists/${playlist}/items/${clip}/pause?position_relative_seconds=${position}`
 					break
 			}
-			await sendGetRequest(cmd)
+			await this.sendGetRequest(cmd)
 		},
 	}
 	actions['resume'] = {
@@ -293,12 +293,20 @@ export function getActions() {
 	}
 	actions['gotoEndMinus'] = {
 		name: 'Goto (end minus)',
-		options: [{ type: 'number', label: 'Time to end of clip (seconds)', id: 'tMinus', default: '30', required: true }],
+		options: [
+			{
+				type: 'number',
+				label: 'Time to end of clip (seconds)',
+				id: 'tMinus',
+				default: 30,
+				required: true,
+			},
+		],
 		callback: async (event) => {
-			if (this.playing.item_playback_status == 'playing' || 'paused') {
+			if (this.playing.item_playback_status == 'playing') {
 				const mode = this.playing.item_playback_status == 'playing' ? 'play' : 'pause'
 				const time = this.playing.item_duration - event.options.tMinus
-				cmd = `playlists/${this.playing.playlist_index}/items/${this.playing.item_index}/${mode}?position_relative_seconds=${time}`
+				const cmd = `playlists/${this.playing.playlist_index}/items/${this.playing.item_index}/${mode}?position_relative_seconds=${time}`
 				await this.sendGetRequest(cmd)
 			}
 		},

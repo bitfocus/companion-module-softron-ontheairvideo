@@ -152,6 +152,7 @@ export function getPresets() {
 				up: [],
 			},
 		],
+		feedbacks: [],
 	}
 
 	/**
@@ -180,6 +181,7 @@ export function getPresets() {
 				up: [],
 			},
 		],
+		feedbacks: [],
 	}
 
 	/**
@@ -190,7 +192,7 @@ export function getPresets() {
 		category: 'Transport',
 		name: 'Status',
 		style: {
-			text: `$(${this.shorthame}:playbackStatus)`,
+			text: `$(${this.shortname}:playbackStatus)`,
 			size: '14',
 			color: whiteColor,
 			bgcolor: blackColor,
@@ -260,6 +262,7 @@ export function getPresets() {
 				up: [],
 			},
 		],
+		feedbacks: [],
 	}
 
 	/**
@@ -272,7 +275,7 @@ export function getPresets() {
 				category: `Clips (playlist ${playlist})`,
 				name: `Clip ${clip}`,
 				style: {
-					text: `$(${this.shorthame}:clip_${playlist}_${clip})`,
+					text: `$(${this.shortname}:clip_${playlist}_${clip})`,
 					size: 'auto',
 					color: whiteColor,
 					bgcolor: blackColor,
