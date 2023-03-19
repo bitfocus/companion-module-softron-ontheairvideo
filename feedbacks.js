@@ -151,6 +151,9 @@ export function initFeedbacks() {
 						if (Math.floor(this.playing.playlist_remaining) <= options.time) {
 							return true
 						}
+						break
+					default:
+						return false
 				}
 			}
 		},

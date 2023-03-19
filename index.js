@@ -36,7 +36,6 @@ class OnTheAirVideoInstance extends InstanceBase {
 		this.testingActive = false
 		this.testInterval = 10000
 		this.pollCmd = `playback/playing`
-		this.pollTimer = null
 		this.pollId = ``
 		this.gotOptions = undefined
 	}
