@@ -300,9 +300,6 @@ class OnTheAirVideoInstance extends InstanceBase {
 	 * @private
 	 */
 	processError(error) {
-		if (error.code !== undefined) {
-			//		console.log(error)
-		}
 		if (error !== null) {
 			if (error.code !== undefined) {
 				this.log('error', 'Connection failed (' + error.message + ')')
