@@ -42,8 +42,10 @@ export function getPresets() {
 				feedbackId: 'playbackStatus',
 				options: {
 					status: 'Playing',
-					fg: whiteColor,
-					bg: playingColor,
+				},
+				style: {
+					color: whiteColor,
+					bgcolor: playingColor,
 				},
 			},
 		],
@@ -81,8 +83,10 @@ export function getPresets() {
 				feedbackId: 'playbackStatus',
 				options: {
 					status: 'Paused',
-					fg: blackColor,
-					bg: pausedColor,
+				},
+				style: {
+					color: blackColor,
+					bgcolor: pausedColor,
 				},
 			},
 		],
@@ -119,8 +123,10 @@ export function getPresets() {
 				feedbackId: 'playbackStatus',
 				options: {
 					status: 'Stopped',
-					fg: whiteColor,
-					bg: stoppedColor,
+				},
+				style: {
+					color: whiteColor,
+					bgcolor: stoppedColor,
 				},
 			},
 		],
@@ -172,7 +178,7 @@ export function getPresets() {
 			{
 				down: [
 					{
-						action: 'skipNext',
+						actionId: 'skipNext',
 						options: {
 							playlist: '',
 						},
@@ -208,32 +214,40 @@ export function getPresets() {
 				feedbackId: 'playbackStatus',
 				options: {
 					status: 'Playing',
-					fg: whiteColor,
-					bg: playingColor,
+				},
+				style: {
+					color: whiteColor,
+					bgcolor: playingColor,
 				},
 			},
 			{
 				feedbackId: 'playbackStatus',
 				options: {
 					status: 'Paused',
-					fg: blackColor,
-					bg: pausedColor,
+				},
+				style: {
+					color: blackColor,
+					bgcolor: pausedColor,
 				},
 			},
 			{
 				feedbackId: 'playbackStatus',
 				options: {
 					status: 'Stopped',
-					fg: whiteColor,
-					bg: stoppedColor,
+				},
+				style: {
+					color: whiteColor,
+					bgcolor: stoppedColor,
 				},
 			},
 			{
 				feedbackId: 'playbackStatus',
 				options: {
 					status: 'Hold First Frame',
-					fg: whiteColor,
-					bg: activeColor,
+				},
+				style: {
+					color: whiteColor,
+					bgcolor: activeColor,
 				},
 			},
 		],
@@ -301,8 +315,10 @@ export function getPresets() {
 							playlist: playlist,
 							clip: clip,
 							status: 'Hold First Frame',
-							fg: whiteColor,
-							bg: activeColor,
+						},
+						style: {
+							color: whiteColor,
+							bgcolor: activeColor,
 						},
 					},
 					{
@@ -311,8 +327,10 @@ export function getPresets() {
 							playlist: playlist,
 							clip: clip,
 							status: 'Playing',
-							fg: whiteColor,
-							bg: playingColor,
+						},
+						style: {
+							color: whiteColor,
+							bgcolor: playingColor,
 						},
 					},
 					{
@@ -321,8 +339,10 @@ export function getPresets() {
 							playlist: playlist,
 							clip: clip,
 							status: 'Paused',
-							fg: blackColor,
-							bg: pausedColor,
+						},
+						style: {
+							color: blackColor,
+							bgcolor: pausedColor,
 						},
 					},
 				],
