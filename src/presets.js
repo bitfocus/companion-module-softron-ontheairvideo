@@ -278,6 +278,37 @@ export function getPresets() {
 		],
 		feedbacks: [],
 	}
+	
+	/**
+	* Goto T-Minus
+	*/
+	for (let time = 30; time > 0; time = time - 10) {
+		presets[`goto${time}`] = {
+			type: 'button',
+			category: 'Transport',
+			name: `Goto ${time}`,
+			style: {
+				text: `Goto ${time}`,
+				size: '18',
+				color: whiteColor,
+				bgcolor: blackColor,
+			},
+			steps: [
+				{
+					down: [
+						{
+							actionId: 'gotoEndMinus',
+							options: {
+								tMinus: time
+							}
+						},
+					],
+					up: [],
+				},
+			],
+			feedbacks: [],
+		}
+	}
 
 	/**
 	 * Clip presets
