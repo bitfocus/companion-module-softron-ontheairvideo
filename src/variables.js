@@ -63,6 +63,10 @@ export function updateVariableDefinitions() {
 				name: `Playlist ${pIndex} Clip ${index}`,
 				variableId: `clip_${pIndex}_${index}`,
 			})
+			variables.push({
+				name: `Playlist ${pIndex} Clip ${index} duration`,
+				variableId: `clipDuration_${pIndex}_${index}`,
+			})
 		})
 	})
 
@@ -101,7 +105,8 @@ export function updatePlaylistVariables() {
 		list[`playlist_${pIndex}`] = playlist.label
 		//	this.setVariable(`playlist_${pIndex}`, playlist.label)
 		playlist.clips.forEach((clip, index) => {
-			list[`clip_${pIndex}_${index}`] = clip
+			list[`clip_${pIndex}_${index}`] = clip.name
+			list[`clipDuration_${pIndex}_${index}`] = renderTime(clip.duration)
 			//		this.setVariable(`clip_${pIndex}_${index}`, clip)
 		})
 	})

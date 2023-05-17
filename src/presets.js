@@ -278,10 +278,10 @@ export function getPresets() {
 		],
 		feedbacks: [],
 	}
-	
+
 	/**
-	* Goto T-Minus
-	*/
+	 * Goto T-Minus
+	 */
 	for (let time = 30; time > 0; time = time - 10) {
 		presets[`goto${time}`] = {
 			type: 'button',
@@ -299,8 +299,8 @@ export function getPresets() {
 						{
 							actionId: 'gotoEndMinus',
 							options: {
-								tMinus: time
-							}
+								tMinus: time,
+							},
 						},
 					],
 					up: [],
