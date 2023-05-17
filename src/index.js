@@ -102,7 +102,6 @@ class OnTheAirVideoInstance extends InstanceBase {
 		this.initActions() // Set the actions after info is retrieved
 		this.initVariables()
 		this.initFeedbacks()
-		this.getPlaylists()
 		this.initPresets()
 	}
 
@@ -152,9 +151,11 @@ class OnTheAirVideoInstance extends InstanceBase {
 		this.log('debug', 'Setup Connectivity Tester!')
 		this.errorCount = 0
 		this.pollingActive = false
+		this.testingActive = true
 		clearTimeout(this.pollTimer)
 		this.pollTimer = setInterval(this._restPolling.bind(this), this.testInterval)
-		this.testingActive = true
+		// Run _restPolling now so we don't have to wait
+		this._restPolling()
 	}
 
 	/**
@@ -225,6 +226,7 @@ class OnTheAirVideoInstance extends InstanceBase {
 	 * @since 2.0.0
 	 */
 	processResult(response) {
+		// this.log('debug', `Processing result: ${response.request.requestUrl.pathname}`)
 		switch (response.statusCode) {
 			case 200: // OK
 				this.updateStatus(InstanceStatus.Ok)
