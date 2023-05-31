@@ -284,7 +284,6 @@ class OnTheAirVideoInstance extends InstanceBase {
 			}
 			this.updateVariableDefinitions() // Refresh the variables
 		} else if (cmd.match(/^\/playlists\/.*\/items$/)) {
-			console.log(data)
 			// Update the clips for the given playlist
 			let playlistID = decodeURI(cmd.match(/playlists\/(.*)\/items/)[1])
 			let index
@@ -293,7 +292,6 @@ class OnTheAirVideoInstance extends InstanceBase {
 			for (index in data) {
 				playlist['clips'].push(data[index])
 			}
-			console.log(this.playlists)
 			this.updateVariableDefinitions() // Refresh the variables
 		}
 	}
