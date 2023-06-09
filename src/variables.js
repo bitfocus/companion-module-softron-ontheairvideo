@@ -115,7 +115,7 @@ export function updatePlaylistVariables() {
 
 function renderTime(seconds) {
 	let time = new Date(null)
-	time.setSeconds(seconds)
+	time.setSeconds((seconds?seconds:0))
 	let timeStr = time.toISOString().substr(11, 8)
 	return timeStr.startsWith('00') ? timeStr.substr(3, 5) : timeStr
 }
