@@ -101,10 +101,11 @@ export function updatePlaylistVariables() {
 	this.log('debug', 'Running updatePlaylistVariables')
 	let list = {}
 	this.playlists.forEach((playlist, pIndex) => {
-		// this.debug('Playlist:', playlist);
+		this.log('debug',`Updating variables for playlist ${pIndex}: ${playlist.id}`);
 		list[`playlist_${pIndex}`] = playlist.label
 		//	this.setVariable(`playlist_${pIndex}`, playlist.label)
 		playlist.clips.forEach((clip, index) => {
+			this.log('debug', `-- Updating variables for clip ${index}: ${clip.name}, duration: ${clip.duration}`);
 			list[`clip_${pIndex}_${index}`] = clip.name
 			list[`clipDuration_${pIndex}_${index}`] = renderTime(clip.duration)
 			//		this.setVariable(`clip_${pIndex}_${index}`, clip)
