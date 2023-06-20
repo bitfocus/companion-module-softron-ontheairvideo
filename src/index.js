@@ -226,7 +226,7 @@ class OnTheAirVideoInstance extends InstanceBase {
 	 * @since 2.0.0
 	 */
 	processResult(response) {
-		// this.log('debug', `Processing result: ${response.request.requestUrl.pathname}`)
+		console.log(`Processing result: ${response.statusCode} ${response.request.requestUrl.pathname}`)
 		switch (response.statusCode) {
 			case 200: // OK
 				this.updateStatus(InstanceStatus.Ok)
@@ -277,6 +277,7 @@ class OnTheAirVideoInstance extends InstanceBase {
 			this.checkFeedbacks()
 		} else if (cmd == '/playlists') {
 			// Updated the list of playlists
+			// console.log(`Playlist data: ${JSON.stringify(data)}`)
 			let index
 			for (index in data) {
 				this.playlists.push({ id: data[index].unique_id, label: data[index].name, clips: [] })
@@ -302,6 +303,7 @@ class OnTheAirVideoInstance extends InstanceBase {
 	 * @private
 	 */
 	processError(error) {
+		console.log(`Processing error: ${response.request.requestUrl.pathname}`)
 		if (error !== null) {
 			if (error.code !== undefined) {
 				this.log('error', 'Connection failed (' + error.message + ')')

@@ -106,3 +106,4 @@ dist
 # Companion package
 /pkg
 /pkg.tgz
+.DS_Store
