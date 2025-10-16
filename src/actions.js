@@ -318,6 +318,128 @@ export function getActions() {
 			this.getPlaylists()
 		},
 	}
+	actions['joinInProgress'] = {
+		name: 'Join In Progress',
+		options: [
+			{
+				type: 'textinput',
+				label: 'Playlist (optional, name/index)',
+				id: 'playlist',
+				default: '',
+				tooltip: 'Enter an index (zero based) or name of a playlist',
+				required: false,
+				useVariables: true,
+			},
+			{
+				type: 'textinput',
+				label: 'Clip (optional, index/UID)',
+				id: 'clip',
+				tooltip: 'Enter an index (zero based) or UID for a clip',
+				default: '',
+				required: false,
+				useVariables: true,
+			},
+		],
+		callback: async (event) => {
+			const playlist = await this.parseVariablesInString(event.options.playlist)
+			const clip = await this.parseVariablesInString(event.options.clip)
+			let cmd = ''
+			if (playlist == '') {
+				cmd = `playback/join_in_progress`
+			} else {
+				if (clip !== '') {
+					cmd = `playlists/${playlist}/items/${clip}/join_in_progress`
+				} else {
+					cmd = `playlists/${playlist}/join_in_progress`
+				}
+			}
+			await this.sendGetRequest(cmd)
+		},
+	}
+	actions['gpiTrigger'] = {
+		name: 'Toggle Virtual GPI',
+		options: [
+			{
+				type: 'number',
+				label: 'GPI Input',
+				id: 'input',
+				default: 1,
+				min: 1,
+				max: 25,
+				required: true,
+				tooltip: 'GPI input number (1-25)',
+			},
+		],
+		callback: async (event) => {
+			const cmd = `playback/gpi_trigger?input=${event.options.input}`
+			await this.sendGetRequest(cmd)
+		},
+	}
+	actions['cueTrigger'] = {
+		name: 'Cue Trigger (Space Bar)',
+		options: [],
+		callback: async (event) => {
+			await this.sendGetRequest('playback/cue_trigger')
+		},
+	}
+	actions['cgPlay'] = {
+		name: 'CG Project - Play',
+		options: [
+			{
+				type: 'dropdown',
+				label: 'CG Project',
+				id: 'project',
+				default: '',
+				choices: this.cgProjects.map((project) => ({ id: project.id, label: project.label })),
+				tooltip: 'Select a CG project',
+				required: true,
+			},
+		],
+		callback: async (event) => {
+			await this.sendGetRequest(`playback/cg_projects/${event.options.project}/play`)
+		},
+	}
+	actions['cgPause'] = {
+		name: 'CG Project - Pause',
+		options: [
+			{
+				type: 'dropdown',
+				label: 'CG Project',
+				id: 'project',
+				default: '',
+				choices: this.cgProjects.map((project) => ({ id: project.id, label: project.label })),
+				tooltip: 'Select a CG project',
+				required: true,
+			},
+		],
+		callback: async (event) => {
+			await this.sendGetRequest(`playback/cg_projects/${event.options.project}/pause`)
+		},
+	}
+	actions['cgStop'] = {
+		name: 'CG Project - Stop',
+		options: [
+			{
+				type: 'dropdown',
+				label: 'CG Project',
+				id: 'project',
+				default: '',
+				choices: this.cgProjects.map((project) => ({ id: project.id, label: project.label })),
+				tooltip: 'Select a CG project',
+				required: true,
+			},
+		],
+		callback: async (event) => {
+			await this.sendGetRequest(`playback/cg_projects/${event.options.project}/stop`)
+		},
+	}
+	actions['updateCGProjects'] = {
+		name: 'Update CG projects info',
+		options: [],
+		callback: async (event) => {
+			this.getCGProjects()
+		},
+	}
 
 	return actions
 }
