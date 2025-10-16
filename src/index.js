@@ -28,6 +28,7 @@ class OnTheAirVideoInstance extends InstanceBase {
 		this.updatePlaylistVariables = updatePlaylistVariables.bind(this)
 
 		this.playlists = []
+		this.cgProjects = []
 		this.playing = {}
 		this.pollingActive = false
 		this.errorCount = 0
@@ -38,6 +39,8 @@ class OnTheAirVideoInstance extends InstanceBase {
 		this.pollCmd = `playback/playing`
 		this.pollId = ``
 		this.gotOptions = undefined
+		this.thumbnailFeedbacks = new Map() // Track active thumbnail feedbacks
+		this.thumbnailTimers = new Map() // Track thumbnail refresh timers
 	}
 
 	/**
@@ -75,6 +78,12 @@ class OnTheAirVideoInstance extends InstanceBase {
 	 */
 	async destroy() {
 		this.log('debug', `destroy ${this.id}`)
+		// Clean up all thumbnail timers
+		for (const timer of this.thumbnailTimers.values()) {
+			clearInterval(timer)
+		}
+		this.thumbnailTimers.clear()
+		this.thumbnailFeedbacks.clear()
 	}
 
 	/**
@@ -103,6 +112,7 @@ class OnTheAirVideoInstance extends InstanceBase {
 		this.initVariables()
 		this.initFeedbacks()
 		this.initPresets()
+		this.getCGProjects() // Fetch CG projects on initialization
 	}
 
 	/**
@@ -199,6 +209,14 @@ class OnTheAirVideoInstance extends InstanceBase {
 	// TODO Update playlists periodically
 
 	/**
+	 * Build an array of available CG projects
+	 */
+	getCGProjects() {
+		this.cgProjects = []
+		this.sendGetRequest('playback/cg_projects')
+	}
+
+	/**
 	 * Send a REST GET request to the player and handle errorcodes
 	 * @param  {} cmd
 	 */
@@ -229,19 +247,23 @@ class OnTheAirVideoInstance extends InstanceBase {
 		console.log(`Processing result: ${response.statusCode} ${response.request.requestUrl.pathname}`)
 		switch (response.statusCode) {
 			case 200: // OK
-				this.updateStatus(InstanceStatus.Ok)
 				if (this.testingActive) {
+					this.updateStatus(InstanceStatus.Ok)
 					this.setupPolling()
 					this.getPlaylists()
 				}
 				this.processData200(response.request.requestUrl.pathname, response.body)
 				break
 			case 201: // Created
-				this.updateStatus(InstanceStatus.Ok)
+				if (this.testingActive) {
+					this.updateStatus(InstanceStatus.Ok)
+				}
 				this.log('debug', `Created: ${response.body.error}`)
 				break
 			case 202: // Accepted
-				this.updateStatus(InstanceStatus.Ok)
+				if (this.testingActive) {
+					this.updateStatus(InstanceStatus.Ok)
+				}
 				this.log('debug', `Accepted: ${response.body.error}`)
 				break
 			case 400: // Bad Request
@@ -294,6 +316,23 @@ class OnTheAirVideoInstance extends InstanceBase {
 				playlist['clips'].push(data[index])
 			}
 			this.updateVariableDefinitions() // Refresh the variables
+		} else if (cmd == '/playback/cg_projects') {
+			// Updated the list of CG projects
+			console.log(`CG Projects data: ${JSON.stringify(data)}`)
+			// The API might return the array directly or nested in cg_projects property
+			const projects = Array.isArray(data) ? data : data.cg_projects || []
+			let index
+			for (index in projects) {
+				this.cgProjects.push({
+					id: projects[index].unique_id,
+					label: projects[index].display_name,
+					status: projects[index].status,
+					published_items: projects[index].published_items || [],
+				})
+			}
+			this.log('debug', `Loaded ${this.cgProjects.length} CG projects`)
+			this.updateVariableDefinitions() // Refresh the variables
+			this.initActions() // Refresh actions to update dropdown choices
 		}
 	}
 
@@ -303,7 +342,7 @@ class OnTheAirVideoInstance extends InstanceBase {
 	 * @private
 	 */
 	processError(error) {
-		console.log(`Processing error: ${response.request.requestUrl.pathname}`)
+		console.log(`Processing error: ${error.message}`)
 		if (error !== null) {
 			if (error.code !== undefined) {
 				this.log('error', 'Connection failed (' + error.message + ')')
@@ -336,6 +375,78 @@ class OnTheAirVideoInstance extends InstanceBase {
 			return
 		}
 		this.processResult(response)
+	}
+
+	/**
+	 * Subscribe to thumbnail feedback
+	 * @param {Object} feedback - The feedback object
+	 */
+	subscribeThumbnailFeedback(feedback) {
+		const feedbackId = feedback.id
+		const interval = feedback.options.interval || 500
+
+		this.log('debug', `Subscribing to thumbnail feedback ${feedbackId} with interval ${interval}ms`)
+
+		// Store the feedback
+		this.thumbnailFeedbacks.set(feedbackId, feedback)
+
+		// Set up periodic refresh
+		const timer = setInterval(() => {
+			this.checkFeedbacks('playbackThumbnail')
+		}, interval)
+
+		this.thumbnailTimers.set(feedbackId, timer)
+
+		// Trigger immediate update
+		this.checkFeedbacks('playbackThumbnail')
+	}
+
+	/**
+	 * Unsubscribe from thumbnail feedback
+	 * @param {Object} feedback - The feedback object
+	 */
+	unsubscribeThumbnailFeedback(feedback) {
+		const feedbackId = feedback.id
+
+		this.log('debug', `Unsubscribing from thumbnail feedback ${feedbackId}`)
+
+		// Clear the timer
+		const timer = this.thumbnailTimers.get(feedbackId)
+		if (timer) {
+			clearInterval(timer)
+			this.thumbnailTimers.delete(feedbackId)
+		}
+
+		// Remove the feedback
+		this.thumbnailFeedbacks.delete(feedbackId)
+	}
+
+	/**
+	 * Get the thumbnail image from the API
+	 * @returns {Object} Image object for feedback
+	 */
+	async getThumbnailImage() {
+		try {
+			// Create options for fetching image buffer
+			const imageOptions = new Options({
+				prefixUrl: this.gotOptions.prefixUrl,
+				responseType: 'buffer',
+				throwHttpErrors: false,
+			})
+
+			const response = await got('playback/thumbnail', undefined, imageOptions)
+
+			if (response.statusCode === 200 && response.body) {
+				// Return the image in base64 format that Companion expects
+				return {
+					png64: response.body.toString('base64'),
+				}
+			}
+		} catch (error) {
+			this.log('warn', `Failed to fetch thumbnail: ${error.message}`)
+		}
+
+		return undefined
 	}
 }
 

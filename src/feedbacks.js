@@ -159,5 +159,31 @@ export function initFeedbacks() {
 		},
 	}
 
+	feedbacks.playbackThumbnail = {
+		name: 'Playback Thumbnail',
+		type: 'advanced',
+		description: 'Display the playback thumbnail on the button',
+		options: [
+			{
+				type: 'number',
+				label: 'Refresh Interval (ms)',
+				id: 'interval',
+				tooltip: 'How often to refresh the thumbnail in milliseconds',
+				default: 500,
+				min: 100,
+				max: 10000,
+			},
+		],
+		subscribe: (feedback) => {
+			this.subscribeThumbnailFeedback(feedback)
+		},
+		unsubscribe: (feedback) => {
+			this.unsubscribeThumbnailFeedback(feedback)
+		},
+		callback: async (feedback) => {
+			return this.getThumbnailImage()
+		},
+	}
+
 	return feedbacks
 }
