@@ -440,6 +440,34 @@ export function getActions() {
 			this.getCGProjects()
 		},
 	}
+	actions['runAction'] = {
+		name: 'Run Action (AppleScript)',
+		options: [
+			{
+				type: 'dropdown',
+				label: 'Action',
+				id: 'action',
+				default: '',
+				choices: (this.availableActions || []).map((action) => ({ id: action, label: action })),
+				tooltip: 'Select an available action to run',
+				required: true,
+			},
+			{
+				type: 'textinput',
+				label: 'Parameter (optional)',
+				id: 'parameter',
+				default: '',
+				tooltip: 'Optional parameter to pass to the action',
+				required: false,
+				useVariables: true,
+			},
+		],
+		callback: async (event) => {
+			const parameter = await this.parseVariablesInString(event.options.parameter)
+			const cmd = `actions/${event.options.action}/run?parameter=${encodeURIComponent(parameter)}`
+			await this.sendGetRequest(cmd)
+		},
+	}
 
 	return actions
 }

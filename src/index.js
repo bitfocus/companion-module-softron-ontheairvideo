@@ -1,7 +1,7 @@
 import { runEntrypoint, InstanceBase, InstanceStatus, Regex } from '@companion-module/base'
 import { getActions } from './actions.js'
 import { getPresets } from './presets.js'
-import { updateVariableDefinitions, updateStatusVariables, updatePlaylistVariables } from './variables.js'
+import { updateVariableDefinitions, updateStatusVariables, updatePlaylistVariables, updateInfoVariables } from './variables.js'
 import { initFeedbacks } from './feedbacks.js'
 import { upgradeScripts } from './upgrades.js'
 import got, { Options } from 'got'
@@ -26,10 +26,13 @@ class OnTheAirVideoInstance extends InstanceBase {
 		this.updateVariableDefinitions = updateVariableDefinitions.bind(this)
 		this.updateStatusVariables = updateStatusVariables.bind(this)
 		this.updatePlaylistVariables = updatePlaylistVariables.bind(this)
+		this.updateInfoVariables = updateInfoVariables.bind(this)
 
 		this.playlists = []
 		this.cgProjects = []
 		this.playing = {}
+		this.info = {}
+		this.availableActions = []
 		this.pollingActive = false
 		this.errorCount = 0
 		this.pollTimer = null
@@ -112,7 +115,6 @@ class OnTheAirVideoInstance extends InstanceBase {
 		this.initVariables()
 		this.initFeedbacks()
 		this.initPresets()
-		this.getCGProjects() // Fetch CG projects on initialization
 	}
 
 	/**
@@ -209,6 +211,13 @@ class OnTheAirVideoInstance extends InstanceBase {
 	// TODO Update playlists periodically
 
 	/**
+	 * Fetch system info from /info endpoint
+	 */
+	getInfo() {
+		this.sendGetRequest('info')
+	}
+
+	/**
 	 * Build an array of available CG projects
 	 */
 	getCGProjects() {
@@ -251,6 +260,8 @@ class OnTheAirVideoInstance extends InstanceBase {
 					this.updateStatus(InstanceStatus.Ok)
 					this.setupPolling()
 					this.getPlaylists()
+					this.getInfo()
+					this.getCGProjects()
 				}
 				this.processData200(response.request.requestUrl.pathname, response.body)
 				break
@@ -333,6 +344,14 @@ class OnTheAirVideoInstance extends InstanceBase {
 			this.log('debug', `Loaded ${this.cgProjects.length} CG projects`)
 			this.updateVariableDefinitions() // Refresh the variables
 			this.initActions() // Refresh actions to update dropdown choices
+		} else if (cmd == '/info') {
+			// Store system info
+			this.info = data
+			this.availableActions = Array.isArray(data.available_actions) ? data.available_actions : []
+			this.log('debug', `Loaded system info: ${data.application_name} v${data.application_version}`)
+			this.log('debug', `Available actions: ${this.availableActions.join(', ')}`)
+			this.updateInfoVariables(data)
+			this.initActions() // Refresh actions to update dropdown choices with available actions
 		}
 	}
 
