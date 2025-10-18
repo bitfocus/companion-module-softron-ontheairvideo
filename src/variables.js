@@ -5,6 +5,20 @@ export function updateVariableDefinitions() {
 	this.log('debug', 'Running updateVariableDefinitions')
 	const variables = []
 
+	// system info vars:
+	variables.push({
+		name: 'Application Version',
+		variableId: 'applicationVersion',
+	})
+	variables.push({
+		name: 'macOS Version',
+		variableId: 'macOSVersion',
+	})
+	variables.push({
+		name: 'Computer Name',
+		variableId: 'computerName',
+	})
+
 	// playback status vars:
 	variables.push({
 		name: 'Playback status',
@@ -72,6 +86,17 @@ export function updateVariableDefinitions() {
 
 	this.setVariableDefinitions(variables)
 	this.updatePlaylistVariables()
+}
+
+/**
+ * Update the values of system info variables.
+ */
+export function updateInfoVariables(info) {
+	let list = {}
+	list['applicationVersion'] = info.application_version || '-'
+	list['macOSVersion'] = info.mac_os_version || '-'
+	list['computerName'] = info.computer_name || '-'
+	this.setVariableValues(list)
 }
 
 /**
