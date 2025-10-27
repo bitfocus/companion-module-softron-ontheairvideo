@@ -1,4 +1,4 @@
-import { CHOICES_POSITIONTYPE } from './choices.js'
+import { CHOICES_ITEM_TYPE, CHOICES_POSITIONTYPE } from './choices.js'
 
 export function getActions() {
 	const actions = {}
@@ -458,6 +458,166 @@ export function getActions() {
 			const parameter = await this.parseVariablesInString(event.options.parameter)
 			const cmd = `actions/${event.options.action}/run?parameter=${encodeURIComponent(parameter)}`
 			await this.sendGetRequest(cmd)
+		},
+	}
+	actions['create item'] = {
+		name: 'Create Item',
+		options: [
+			{
+				type: 'dropdown',
+				label: 'Item Type',
+				id: 'type',
+				default: '',
+				choices: CHOICES_ITEM_TYPE,
+				tooltip: 'Select type of item to create',
+				required: true,
+			},
+			{
+				type: 'textinput',
+				label: 'Playlist (name/index)',
+				id: 'playlist',
+				default: '',
+				tooltip: 'Enter an index (zero based) or name of a playlist',
+				required: true,
+				useVariables: true,
+			},
+			{
+				type: 'number',
+				label: 'Clip index (zero based)',
+				id: 'clip',
+				tooltip: 'Enter an index (zero based) for a clip',
+				default: '',
+				required: false,
+				useVariables: true,
+			},
+			{
+				type: 'textinput',
+				label: 'Name (optional)',
+				id: 'name',
+				default: '',
+				tooltip: 'Optional name for the item',
+				required: false,
+				useVariables: true,
+			},
+			{
+				type: 'textinput',
+				label: 'filePath',
+				id: 'filePath',
+				default: '',
+				tooltip: 'file path for the item',
+				required: false,
+				useVariables: true,
+				isvisible: (options) => options.type == '0',
+			},
+			{
+				type: 'textinput',
+				label: 'Live Source',
+				id: 'liveSource',
+				default: '',
+				tooltip: 'Live source for the item',
+				required: false,
+				useVariables: true,
+				isvisible: (options) => options.type == '4',
+			},
+			{
+				type: 'number',
+				label: 'Item duration (seconds)',
+				id: 'Duration',
+				default: '',
+				tooltip: 'Item duration for the item',
+				default: 60,
+				min: 1,
+				max: 1800,
+				required: false,
+				useVariables: true,
+				isvisible: (options) => options.type == '4' || options.type == '5',
+			},
+			{
+				type: 'textinput',
+				label: 'Stream URL',
+				id: 'streamURL',
+				default: '',
+				tooltip: 'Stream URL for the item',
+				required: false,
+				useVariables: true,
+				isvisible: (options) => options.type == '5',
+			},
+		],
+		callback: async (event) => {
+			const playlist = await this.parseVariablesInString(event.options.playlist)
+			const clip = await this.parseVariablesInString(event.options.clip)
+			let cmd = ''
+			if (clip !== '') {
+					cmd = `playlists/${playlist}/items/${clip}`
+				} else {
+					cmd = `playlists/${playlist}/items`
+				}
+			let body = {}
+			switch (event.options.type) {
+				case '0':
+					// Clip
+					if ((event.options.name) !== '') {
+						body = {
+							"clip_type" : '0',
+							"name": (event.options.name),
+							"url": (event.options.filePath),
+						}
+					} else {
+						body = {
+							"clip_type" : '0',
+							"url" : (event.options.filePath),
+						}
+					}
+					break
+				case '3':
+					// Comment
+					if ((event.options.name) !== '') {
+						body = {
+							"clip_type" : '3',
+							"name" : (event.options.name),
+						}
+					} else {
+						body = {
+							"clip_type" : '3',
+						}
+					}
+					break
+				case '4':
+					// Live
+					if ((event.options.name) !== '') {
+						body = {
+							"clip_type" : '4',
+							"name" : (event.options.name),
+							"live_source_name" : (event.options.liveSource),
+							"duration" : (event.options.Duration),
+						}
+					} else {
+						body = {
+							"clip_type" : '4',
+							"live_source_name" : (event.options.liveSource),
+							"duration" : (event.options.Duration),
+						}
+					}
+					break
+				case '5':
+					// Stream
+					if ((event.options.name) !== '') {
+						body = {
+							"clip_type" : '5',
+							"name" : (event.options.name),
+							"url" : (event.options.streamURL),
+							"duration" : (event.options.Duration),
+						}
+					} else {
+						body = {
+							"clip_type" : '5',
+							"url" : (event.options.streamURL),
+							"duration" : (event.options.Duration),
+						}
+					}
+					break
+			}
+			await this.sendPostRequest(cmd, body)
 		},
 	}
 

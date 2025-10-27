@@ -246,6 +246,34 @@ class OnTheAirVideoInstance extends InstanceBase {
 	}
 
 	/**
+	 * Send a REST POST request to the player and handle errorcodes
+	 * @param {string} cmd - API path to POST to
+	 * @param {Object} body - JSON body to send
+	 */
+	async sendPostRequest(cmd, body) {
+		this.log('debug', `Sending POST request: ${this.gotOptions.prefixUrl}${cmd} body=${JSON.stringify(body)}`)
+		let response
+		let poll
+		// Build minimal options for POST while keeping prefix and JSON response type
+		const postOptions = {
+			prefixUrl: this.gotOptions.prefixUrl,
+			responseType: 'json',
+			throwHttpErrors: false,
+			json: body,
+		}
+		try {
+			response = await got.post(cmd, postOptions)
+			poll = await got(this.pollCmd, undefined, this.gotOptions)
+		} catch (error) {
+			console.log(error.message)
+			this.processError(error)
+			return
+		}
+		this.processResult(response)
+		this.processResult(poll)
+	}
+
+	/**
 	 * INTERNAL: Callback for REST calls to process the return
 	 *
 	 * @param {Object} response - data: & response: if normal; error: if error
