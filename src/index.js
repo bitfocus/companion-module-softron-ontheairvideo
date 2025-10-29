@@ -1,7 +1,12 @@
 import { runEntrypoint, InstanceBase, InstanceStatus, Regex } from '@companion-module/base'
 import { getActions } from './actions.js'
 import { getPresets } from './presets.js'
-import { updateVariableDefinitions, updateStatusVariables, updatePlaylistVariables, updateInfoVariables } from './variables.js'
+import {
+	updateVariableDefinitions,
+	updateStatusVariables,
+	updatePlaylistVariables,
+	updateInfoVariables,
+} from './variables.js'
 import { initFeedbacks } from './feedbacks.js'
 import { upgradeScripts } from './upgrades.js'
 import got, { Options } from 'got'
@@ -318,7 +323,7 @@ class OnTheAirVideoInstance extends InstanceBase {
 				// Unexpenses response
 				this.updateStatus(
 					InstanceStatus.UnknownError,
-					`Unexpected HTTP status code: ${response.statusCode} - ${response.body.error}`
+					`Unexpected HTTP status code: ${response.statusCode} - ${response.body.error}`,
 				)
 				this.log('warn', `Unexpected HTTP status code: ${response.statusCode} - ${response.body.error}`)
 				break
