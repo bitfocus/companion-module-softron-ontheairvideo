@@ -15,3 +15,10 @@ export const CHOICES_CLIP_PLAYLIST = [
 	{ id: 'clip', label: 'Clip' },
 	{ id: 'playlist', label: 'Playlist' },
 ]
+
+export const CHOICES_ITEM_TYPE = [
+	{ id: '0', label: 'Clip' },
+	{ id: '3', label: 'Comment' },
+	{ id: '4', label: 'Live' },
+	{ id: '5', label: 'Stream' },
+]
