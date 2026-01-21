@@ -64,6 +64,22 @@ export function updateVariableDefinitions() {
 		name: 'Clip remaining',
 		variableId: 'clipRemaining',
 	})
+	variables.push({
+		name: 'Story Page',
+		variableId: 'storyPage',
+	})
+	variables.push({
+		name: 'Story Name',
+		variableId: 'storyName',
+	})
+	variables.push({
+		name: "clip file path",
+		variableId: "clipFilePath",
+	})
+	variables.push({
+		name: "clip file name",
+		variableId: "clipFileName",
+	})
 
 	// playlist variables:
 	this.playlists.forEach((playlist, pIndex) => {
@@ -116,6 +132,10 @@ export function updateStatusVariables(status) {
 	list['clipDuration'] = status.item_duration == undefined ? '-' : renderTime(status.item_duration)
 	list['clipElapsed'] = status.item_elapsed == undefined ? '-' : renderTime(status.item_elapsed)
 	list['clipRemaining'] = status.item_remaining == undefined ? '-' : renderTime(status.item_remaining)
+	list['storyPage'] = status.item_story_page == undefined ? '-' : status.item_story_page
+	list['storyName'] = status.item_story_name == undefined ? '-' : status.item_story_name
+	list['clipFilePath'] = status.item_media_url == undefined ? '-' : status.item_media_url
+	list['clipFileName'] = status.item_filename == undefined ? '-' : status.item_filename
 	this.setVariableValues(list)
 }
 
