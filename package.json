@@ -17,7 +17,7 @@
 		"got": "~12.6.0"
 	},
 	"devDependencies": {
-		"@companion-module/tools": "^2.4.2",
+		"@companion-module/tools": "^2.6.1",
 		"eslint": "^9.38.0",
 		"prettier": "^3.6.2"
 	},
