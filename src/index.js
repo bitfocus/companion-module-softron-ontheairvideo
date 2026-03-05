@@ -6,10 +6,12 @@ import {
 	updateStatusVariables,
 	updatePlaylistVariables,
 	updateInfoVariables,
+	renderTime,
 } from './variables.js'
 import { initFeedbacks } from './feedbacks.js'
 import { upgradeScripts } from './upgrades.js'
 import got, { Options } from 'got'
+import WebSocket from 'ws'
 
 /**
  * Companion instance class for the Softron OnTheAir Vidoe software playout API.
@@ -38,17 +40,34 @@ class OnTheAirVideoInstance extends InstanceBase {
 		this.playing = {}
 		this.info = {}
 		this.availableActions = []
-		this.pollingActive = false
-		this.errorCount = 0
-		this.pollTimer = null
-		this.pollInterval = 1000 // ms
-		this.testingActive = false
-		this.testInterval = 10000
-		this.pollCmd = `playback/playing`
-		this.pollId = ``
 		this.gotOptions = undefined
+		this.pollCmd = 'playback/playing' // Used to refresh state after REST actions
 		this.thumbnailFeedbacks = new Map() // Track active thumbnail feedbacks
 		this.thumbnailTimers = new Map() // Track thumbnail refresh timers
+
+		// WebSocket properties
+		this.ws = null
+		this.wsConnected = false
+		this.wsReconnectTimer = null
+		this.wsReconnectAttempts = 0
+		this.wsReconnectInterval = 5000 // 5 seconds base
+
+		// CG state tracking
+		this.cgState = {} // Maps projectUniqueID -> {status, elapsed_time, duration}
+		this.activeCgProjectId = null
+
+		// ID lookup maps for WebSocket events
+		this.playlistIdMap = new Map() // playlist_unique_id -> {index, label}
+		this.clipIdMap = new Map() // item_unique_id -> {playlistIndex, clipIndex, name, duration}
+
+		// Playlist timing calculation
+		this.currentPlaylistIndex = -1
+		this.currentClipIndex = -1
+		this.playlistElapsedBase = 0 // Sum of previous clips' durations
+		this.currentPlaylistDuration = 0
+
+		// Throttling for timing updates
+		this.lastTimingUpdate = 0
 	}
 
 	/**
@@ -75,7 +94,7 @@ class OnTheAirVideoInstance extends InstanceBase {
 				max: 65535,
 				default: 8081,
 			},
-		]
+			]
 	}
 
 	/**
@@ -86,6 +105,10 @@ class OnTheAirVideoInstance extends InstanceBase {
 	 */
 	async destroy() {
 		this.log('debug', `destroy ${this.id}`)
+
+		// Clean up WebSocket
+		this.closeWebSocket()
+
 		// Clean up all thumbnail timers
 		for (const timer of this.thumbnailTimers.values()) {
 			clearInterval(timer)
@@ -104,19 +127,19 @@ class OnTheAirVideoInstance extends InstanceBase {
 	async init(config) {
 		this.config = config
 
-		// Define the got default options
+		// Define the got default options (for REST API)
 		this.gotOptions = new Options({
 			prefixUrl: `http://${this.config.host}:${this.config.port}/`,
 			responseType: 'json',
 			throwHttpErrors: false,
 		})
 
-		this.updateStatus(InstanceStatus.Connecting, 'Waiting') // status not currently known
+		this.updateStatus(InstanceStatus.Connecting, 'Waiting')
 
-		//Test the connection with a status request
-		await this.setupConnectivtyTester()
+		// Connect via WebSocket (REST is used for initial data only)
+		this.initWebSocket()
 
-		this.initActions() // Set the actions after info is retrieved
+		this.initActions()
 		this.initVariables()
 		this.initFeedbacks()
 		this.initPresets()
@@ -157,52 +180,378 @@ class OnTheAirVideoInstance extends InstanceBase {
 	}
 
 	/**
-	 * INTERNAL: uses polling to create an interval to, effectively, ping
-	 * the device to see if its there.  This uses a longer interval so we're
-	 * not firing a ton of poll calls to a non-responsive device.
-	 *
+	 * Initialize WebSocket connection to OnTheAir Video
 	 * @private
-	 * @since 1.0.0
 	 */
-	setupConnectivtyTester() {
-		this.log('debug', 'Setup Connectivity Tester!')
-		this.errorCount = 0
-		this.pollingActive = false
-		this.testingActive = true
-		clearTimeout(this.pollTimer)
-		this.pollTimer = setInterval(this._restPolling.bind(this), this.testInterval)
-		// Run _restPolling now so we don't have to wait
-		this._restPolling()
+	initWebSocket() {
+		this.closeWebSocket()
+
+		const wsUrl = `ws://${this.config.host}:${this.config.port}/playback`
+		this.log('info', `Connecting to WebSocket: ${wsUrl}`)
+
+		try {
+			this.ws = new WebSocket(wsUrl)
+
+			this.ws.on('open', () => {
+				this.log('info', 'WebSocket connected')
+				this.wsConnected = true
+				this.wsReconnectAttempts = 0
+				this.updateStatus(InstanceStatus.Ok)
+
+				// Fetch initial data via REST
+				this.getPlaylists()
+				this.getInfo()
+				this.getCGProjects()
+			})
+
+			this.ws.on('message', (data) => {
+				this.processWebSocketMessage(data)
+			})
+
+			this.ws.on('close', (code, reason) => {
+				this.log('warn', `WebSocket closed: ${code} - ${reason}`)
+				this.wsConnected = false
+				this.updateStatus(InstanceStatus.Disconnected, 'WebSocket disconnected')
+				this.scheduleWebSocketReconnect()
+			})
+
+			this.ws.on('error', (error) => {
+				this.log('error', `WebSocket error: ${error.message}`)
+				this.wsConnected = false
+			})
+		} catch (error) {
+			this.log('error', `Failed to create WebSocket: ${error.message}`)
+			this.scheduleWebSocketReconnect()
+		}
 	}
 
 	/**
-	 * INTERNAL: creates an interval to run the active polling.
-	 *
+	 * Close WebSocket connection cleanly
 	 * @private
-	 * @since 1.0.0
 	 */
-	setupPolling() {
-		this.log('debug', 'Setup Polling')
-		this.errorCount = 0
-		this.testingActive = false
-		clearInterval(this.pollTimer)
-		this.pollTimer = setInterval(this._restPolling.bind(this), this.pollInterval)
-		this.pollingActive = true
+	closeWebSocket() {
+		if (this.wsReconnectTimer) {
+			clearTimeout(this.wsReconnectTimer)
+			this.wsReconnectTimer = null
+		}
+
+		if (this.ws) {
+			this.ws.removeAllListeners()
+			if (this.ws.readyState === WebSocket.OPEN || this.ws.readyState === WebSocket.CONNECTING) {
+				this.ws.close()
+			}
+			this.ws = null
+		}
+		this.wsConnected = false
+	}
+
+	/**
+	 * Schedule WebSocket reconnection with exponential backoff
+	 * @private
+	 */
+	scheduleWebSocketReconnect() {
+		if (this.wsReconnectTimer) {
+			return // Already scheduled
+		}
+
+		this.wsReconnectAttempts++
+
+		// Exponential backoff: 5s, 10s, 20s, 40s, ... capped at 60s
+		const delay = Math.min(this.wsReconnectInterval * Math.pow(2, this.wsReconnectAttempts - 1), 60000)
+		this.log('debug', `Scheduling WebSocket reconnect in ${delay}ms (attempt ${this.wsReconnectAttempts})`)
+
+		this.wsReconnectTimer = setTimeout(() => {
+			this.wsReconnectTimer = null
+			this.initWebSocket()
+		}, delay)
+	}
+
+	/**
+	 * Process incoming WebSocket messages
+	 * @param {Buffer|string} data - Raw WebSocket message
+	 * @private
+	 */
+	processWebSocketMessage(data) {
+		let message
+		try {
+			message = JSON.parse(data.toString())
+		} catch (error) {
+			this.log('warn', `Invalid WebSocket message: ${error.message}`)
+			return
+		}
+
+		// Route based on message structure
+		if (message.event) {
+			// Playback events
+			this.processPlaybackEvent(message)
+		} else if (message.type === 'project property') {
+			// CG project updates
+			this.processCGEvent(message)
+		} else {
+			this.log('debug', `Unknown WebSocket message type: ${JSON.stringify(message)}`)
+		}
+	}
+
+	/**
+	 * Process playback-related WebSocket events
+	 * @param {Object} event - Parsed event object
+	 * @private
+	 */
+	processPlaybackEvent(event) {
+		switch (event.event) {
+			case 'playback_timing_changed':
+				this.processPlaybackTiming(event)
+				break
+
+			case 'item_changed':
+				this.processItemChanged(event)
+				break
+
+			case 'playback_status_changed':
+				this.processPlaybackStatusChanged(event)
+				break
+
+			default:
+				this.log('debug', `Unhandled playback event: ${event.event}`)
+		}
+	}
+
+	/**
+	 * Process playback_timing_changed event (frequent, ~30fps)
+	 * @param {Object} event
+	 */
+	processPlaybackTiming(event) {
+		// Throttle to ~10fps
+		const now = Date.now()
+		if (now - this.lastTimingUpdate < 100) return
+		this.lastTimingUpdate = now
+
+		// Update internal state
+		this.playing.item_duration = event.item_duration
+		this.playing.item_elapsed = event.item_elapsed_time
+		this.playing.item_remaining = event.item_remaining_time
+		this.playing.item_unique_id = event.item_unique_id
+		this.playing.item_display_name = event.item_display_name
+
+		// Calculate playlist timing
+		const playlistElapsed = this.playlistElapsedBase + (event.item_elapsed_time || 0)
+		const playlistRemaining = this.currentPlaylistDuration - playlistElapsed
+
+		// Update variables
+		const list = {}
+		list['clipDuration'] = event.item_duration != null ? renderTime(event.item_duration) : '-'
+		list['clipElapsed'] = event.item_elapsed_time != null ? renderTime(event.item_elapsed_time) : '-'
+		list['clipRemaining'] = event.item_remaining_time != null ? renderTime(event.item_remaining_time) : '-'
+		list['activeClipName'] = event.item_display_name || '-'
+		list['playlistElapsed'] = playlistElapsed >= 0 ? renderTime(playlistElapsed) : '-'
+		list['playlistRemaining'] = playlistRemaining >= 0 ? renderTime(playlistRemaining) : '-'
+
+		// Next live info
+		list['nextLiveName'] = event.next_live_display_name || '-'
+		list['remainingUntilNextLive'] =
+			event.remaining_time_until_next_live != null ? renderTime(event.remaining_time_until_next_live) : '-'
+
+		this.setVariableValues(list)
+		this.checkFeedbacks()
+	}
+
+	/**
+	 * Process item_changed event
+	 * @param {Object} event
+	 */
+	processItemChanged(event) {
+		this.playing.item_unique_id = event.item_unique_id
+		// Note: item_name is the technical/file name, NOT the display name
+		// item_display_name comes from playback_timing_changed events
+
+		// Look up playlist info from cache
+		if (event.playlist_unique_id && this.playlistIdMap.has(event.playlist_unique_id)) {
+			const playlistInfo = this.playlistIdMap.get(event.playlist_unique_id)
+			this.currentPlaylistIndex = playlistInfo.index
+			this.playing.playlist_index = playlistInfo.index
+			this.playing.playlist_display_name = playlistInfo.label
+
+			this.setVariableValues({
+				activePlaylist: playlistInfo.index,
+				activePlaylistName: playlistInfo.label,
+			})
+		}
+
+		// Look up clip info from cache
+		if (event.item_unique_id && this.clipIdMap.has(event.item_unique_id)) {
+			const clipInfo = this.clipIdMap.get(event.item_unique_id)
+			this.currentClipIndex = clipInfo.clipIndex
+			this.playing.item_index = clipInfo.clipIndex
+
+			this.setVariableValues({
+				activeClip: clipInfo.clipIndex,
+			})
+		}
+		// Don't set activeClipName here - let processPlaybackTiming handle it
+		// since that event has item_display_name (the human-readable name)
+
+		// Recalculate playlist timing base
+		this.calculatePlaylistElapsedBase()
+
+		this.checkFeedbacks()
+	}
+
+	/**
+	 * Process playback_status_changed event
+	 * @param {Object} event
+	 */
+	processPlaybackStatusChanged(event) {
+		this.playing.playback_status = event.playback_status
+
+		this.setVariableValues({
+			playbackStatus: event.playback_status,
+		})
+
+		this.checkFeedbacks()
+	}
+
+	/**
+	 * Process CG project property updates
+	 * @param {Object} event
+	 */
+	processCGEvent(event) {
+		const projectId = event.projectUniqueID
+
+		if (!projectId) {
+			this.log('warn', 'CG event missing projectUniqueID')
+			return
+		}
+
+		// Initialize state for this project if needed
+		if (!this.cgState[projectId]) {
+			this.cgState[projectId] = {
+				status: 'Stopped',
+				elapsed_time: 0,
+				duration: 0,
+			}
+		}
+
+		// Apply changes
+		if (event.changes) {
+			if (event.changes.status !== undefined) {
+				this.cgState[projectId].status = event.changes.status
+
+				// If playing, set as active CG
+				if (event.changes.status === 'Playing') {
+					this.activeCgProjectId = projectId
+				} else if (this.activeCgProjectId === projectId && event.changes.status === 'Stopped') {
+					this.activeCgProjectId = null
+				}
+			}
+
+			if (event.changes.elapsed_time !== undefined) {
+				this.cgState[projectId].elapsed_time = event.changes.elapsed_time
+			}
+
+			if (event.changes.duration !== undefined) {
+				this.cgState[projectId].duration = event.changes.duration
+			}
+		}
+
+		// Update CG variables
+		this.updateCGVariables()
+		this.checkFeedbacks()
+	}
+
+	/**
+	 * Update CG-related variables
+	 */
+	updateCGVariables() {
+		const list = {}
+
+		this.cgProjects.forEach((project, index) => {
+			const state = this.cgState[project.id]
+			list[`cg_${index}_name`] = project.label || '-'
+			list[`cg_${index}_status`] = state?.status || '-'
+		})
+
+		this.setVariableValues(list)
+	}
+
+	/**
+	 * Calculate the sum of durations for clips before the current clip
+	 */
+	calculatePlaylistElapsedBase() {
+		if (this.currentPlaylistIndex < 0 || this.currentPlaylistIndex >= this.playlists.length) {
+			this.playlistElapsedBase = 0
+			this.currentPlaylistDuration = 0
+			return
+		}
+
+		const playlist = this.playlists[this.currentPlaylistIndex]
+		if (!playlist || !playlist.clips) {
+			this.playlistElapsedBase = 0
+			this.currentPlaylistDuration = 0
+			return
+		}
+
+		// Sum durations of clips before current clip
+		let sum = 0
+		for (let i = 0; i < this.currentClipIndex && i < playlist.clips.length; i++) {
+			sum += playlist.clips[i].duration || 0
+		}
+		this.playlistElapsedBase = sum
+
+		// Calculate total playlist duration
+		this.currentPlaylistDuration = playlist.clips.reduce((acc, clip) => acc + (clip.duration || 0), 0)
+
+		// Update playlist duration variable
+		this.setVariableValues({
+			playlistDuration: renderTime(this.currentPlaylistDuration),
+		})
+	}
+
+	/**
+	 * Build ID lookup maps from cached playlist data
+	 */
+	buildIdMaps() {
+		this.playlistIdMap.clear()
+		this.clipIdMap.clear()
+
+		this.playlists.forEach((playlist, pIndex) => {
+			this.playlistIdMap.set(playlist.id, { index: pIndex, label: playlist.label })
+			if (playlist.clips) {
+				playlist.clips.forEach((clip, cIndex) => {
+					if (clip.unique_id) {
+						this.clipIdMap.set(clip.unique_id, {
+							playlistIndex: pIndex,
+							clipIndex: cIndex,
+							name: clip.name,
+							duration: clip.duration,
+						})
+					}
+				})
+			}
+		})
+
+		this.log('debug', `Built ID maps: ${this.playlistIdMap.size} playlists, ${this.clipIdMap.size} clips`)
 	}
 
 	async configUpdated(config) {
 		let resetConnection = false
+		this.log('debug', `Updating config: ${JSON.stringify(config)}`)
 
-		this.log('debug', `Updating config: ${config}`)
 		if (this.config.host != config.host || this.config.port != config.port) {
 			resetConnection = true
 		}
+
 		this.config = config
-		this.log('debug', `Reset connection ${resetConnection}`)
+		this.log('debug', `Reset connection: ${resetConnection}`)
+
 		if (resetConnection === true) {
 			this.gotOptions.prefixUrl = `http://${this.config.host}:${this.config.port}/`
 			this.updateStatus(InstanceStatus.Connecting, 'Waiting…')
-			this.setupConnectivtyTester()
+
+			// Clean up existing connection
+			this.closeWebSocket()
+
+			// Reinitialize WebSocket
+			this.initWebSocket()
 		}
 	}
 
@@ -289,25 +638,12 @@ class OnTheAirVideoInstance extends InstanceBase {
 		console.log(`Processing result: ${response.statusCode} ${response.request.requestUrl.pathname}`)
 		switch (response.statusCode) {
 			case 200: // OK
-				if (this.testingActive) {
-					this.updateStatus(InstanceStatus.Ok)
-					this.setupPolling()
-					this.getPlaylists()
-					this.getInfo()
-					this.getCGProjects()
-				}
 				this.processData200(response.request.requestUrl.pathname, response.body)
 				break
 			case 201: // Created
-				if (this.testingActive) {
-					this.updateStatus(InstanceStatus.Ok)
-				}
 				this.log('debug', `Created: ${response.body.error}`)
 				break
 			case 202: // Accepted
-				if (this.testingActive) {
-					this.updateStatus(InstanceStatus.Ok)
-				}
 				this.log('debug', `Accepted: ${response.body.error}`)
 				break
 			case 400: // Bad Request
@@ -320,7 +656,7 @@ class OnTheAirVideoInstance extends InstanceBase {
 				this.log('info', `Unprocessable entity: ${response.statusCode} - ${response.body.error}`)
 				break
 			default:
-				// Unexpenses response
+				// Unexpected response
 				this.updateStatus(
 					InstanceStatus.UnknownError,
 					`Unexpected HTTP status code: ${response.statusCode} - ${response.body.error}`,
@@ -343,7 +679,6 @@ class OnTheAirVideoInstance extends InstanceBase {
 			this.checkFeedbacks()
 		} else if (cmd == '/playlists') {
 			// Updated the list of playlists
-			// console.log(`Playlist data: ${JSON.stringify(data)}`)
 			let index
 			for (index in data) {
 				this.playlists.push({ id: data[index].unique_id, label: data[index].name, clips: [] })
@@ -360,6 +695,7 @@ class OnTheAirVideoInstance extends InstanceBase {
 				playlist['clips'].push(data[index])
 			}
 			this.updateVariableDefinitions() // Refresh the variables
+			this.buildIdMaps() // Rebuild ID maps with new clip data
 		} else if (cmd == '/playback/cg_projects') {
 			// Updated the list of CG projects
 			console.log(`CG Projects data: ${JSON.stringify(data)}`)
@@ -367,16 +703,25 @@ class OnTheAirVideoInstance extends InstanceBase {
 			const projects = Array.isArray(data) ? data : data.cg_projects || []
 			let index
 			for (index in projects) {
+				const projectId = projects[index].unique_id
 				this.cgProjects.push({
-					id: projects[index].unique_id,
+					id: projectId,
 					label: projects[index].display_name,
 					status: projects[index].status,
 					published_items: projects[index].published_items || [],
 				})
+				// Initialize cgState for this project so feedbacks work immediately
+				this.cgState[projectId] = {
+					status: projects[index].status || 'Stopped',
+					elapsed_time: projects[index].elapsed_time || 0,
+					duration: projects[index].duration || 0,
+				}
 			}
 			this.log('debug', `Loaded ${this.cgProjects.length} CG projects`)
 			this.updateVariableDefinitions() // Refresh the variables
+			this.updateCGVariables() // Set initial CG variable values
 			this.initActions() // Refresh actions to update dropdown choices
+			this.initFeedbacks() // Refresh feedbacks to populate CG project dropdown
 		} else if (cmd == '/info') {
 			// Store system info
 			this.info = data
@@ -401,32 +746,7 @@ class OnTheAirVideoInstance extends InstanceBase {
 			} else {
 				this.log('error', 'general HTTP failure')
 			}
-			this.updateStatus(InstanceStatus.Disconnected, 'NOT CONNECTED')
-			if (this.pollingActive) {
-				this.log('debug', `Error Count: ${this.errorCount}`)
-				this.errorCount++
-			}
-			if (this.errorCount > 10) {
-				this.setupConnectivtyTester()
-			}
 		}
-	}
-
-	/**
-	 * Maintain a polling connection to the target system
-	 * @private
-	 * @since 2.0.0
-	 */
-	async _restPolling() {
-		let response
-		try {
-			response = await got(this.pollCmd, undefined, this.gotOptions)
-		} catch (error) {
-			console.log(error.message)
-			this.processError(error)
-			return
-		}
-		this.processResult(response)
 	}
 
 	/**

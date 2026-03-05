@@ -65,6 +65,28 @@ export function updateVariableDefinitions() {
 		variableId: 'clipRemaining',
 	})
 
+	// next live variables (from WebSocket):
+	variables.push({
+		name: 'Next live clip name',
+		variableId: 'nextLiveName',
+	})
+	variables.push({
+		name: 'Time until next live',
+		variableId: 'remainingUntilNextLive',
+	})
+
+	// CG project variables (dynamically created per project):
+	this.cgProjects.forEach((project, index) => {
+		variables.push({
+			name: `CG ${index} Name`,
+			variableId: `cg_${index}_name`,
+		})
+		variables.push({
+			name: `CG ${project.label} Status`,
+			variableId: `cg_${index}_status`,
+		})
+	})
+
 	// playlist variables:
 	this.playlists.forEach((playlist, pIndex) => {
 		// this.debug('Playlist:', playlist)
@@ -72,7 +94,7 @@ export function updateVariableDefinitions() {
 			name: `Playlist ${pIndex}`,
 			variableId: `playlist_${pIndex}`,
 		})
-		playlist.clips.forEach((clip, index) => {
+		playlist.clips.forEach((_clip, index) => {
 			variables.push({
 				name: `Playlist ${pIndex} Clip ${index}`,
 				variableId: `clip_${pIndex}_${index}`,
@@ -139,9 +161,9 @@ export function updatePlaylistVariables() {
 	this.setVariableValues(list)
 }
 
-function renderTime(seconds) {
+export function renderTime(seconds) {
 	let time = new Date(null)
 	time.setSeconds(seconds ? seconds : 0)
-	let timeStr = time.toISOString().substr(11, 8)
-	return timeStr.startsWith('00') ? timeStr.substr(3, 5) : timeStr
+	let timeStr = time.toISOString().substring(11, 19)
+	return timeStr.startsWith('00') ? timeStr.substring(3, 8) : timeStr
 }
