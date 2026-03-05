@@ -1,6 +1,6 @@
 {
 	"name": "softron-ontheairvideo",
-	"version": "2.3.1",
+	"version": "3.0.0",
 	"main": "src/index.js",
 	"type": "module",
 	"scripts": {
@@ -14,7 +14,8 @@
 	},
 	"dependencies": {
 		"@companion-module/base": "1.12.1",
-		"got": "~12.6.0"
+		"got": "~12.6.0",
+		"ws": "^8.16.0"
 	},
 	"devDependencies": {
 		"@companion-module/tools": "^2.6.1",

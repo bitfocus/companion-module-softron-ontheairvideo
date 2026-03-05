@@ -22,3 +22,10 @@ export const CHOICES_ITEM_TYPE = [
 	{ id: '4', label: 'Live' },
 	{ id: '5', label: 'Stream' },
 ]
+
+export const CHOICES_CGSTATUS = [
+	{ id: 'Playing', label: 'Playing' },
+	{ id: 'Stopping', label: 'Stopping' },
+	{ id: 'Stopped', label: 'Stopped' },
+	{ id: 'Paused', label: 'Paused' },
+]

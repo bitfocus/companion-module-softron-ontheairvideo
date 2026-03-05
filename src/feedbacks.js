@@ -1,5 +1,5 @@
 import { Regex, combineRgb } from '@companion-module/base'
-import { CHOICES_PLAYBACKSTATUS, CHOICES_CLIP_PLAYLIST } from './choices.js'
+import { CHOICES_PLAYBACKSTATUS, CHOICES_CLIP_PLAYLIST, CHOICES_CGSTATUS } from './choices.js'
 
 export function initFeedbacks() {
 	const feedbacks = {}
@@ -182,6 +182,32 @@ export function initFeedbacks() {
 		},
 		callback: async (feedback) => {
 			return this.getThumbnailImage()
+		},
+	}
+
+	feedbacks.cgStatus = {
+		name: 'CG Project Status',
+		type: 'boolean',
+		description: 'Set feedback based on CG project status',
+		options: [
+			{
+				type: 'dropdown',
+				label: 'CG Project',
+				id: 'project',
+				choices: this.cgProjects.map((p) => ({ id: p.id, label: p.label })),
+				default: this.cgProjects.length > 0 ? this.cgProjects[0].id : '',
+			},
+			{
+				type: 'dropdown',
+				label: 'Status',
+				id: 'status',
+				choices: CHOICES_CGSTATUS,
+				default: 'Playing',
+			},
+		],
+		defaultStyle: stylePlaying,
+		callback: ({ options }) => {
+			return this.cgState[options.project]?.status === options.status
 		},
 	}
 
