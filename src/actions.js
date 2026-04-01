@@ -548,71 +548,71 @@ export function getActions() {
 			const clip = await this.parseVariablesInString(event.options.clip)
 			let cmd = ''
 			if (clip !== '') {
-					cmd = `playlists/${playlist}/items/${clip}`
-				} else {
-					cmd = `playlists/${playlist}/items`
-				}
+				cmd = `playlists/${playlist}/items/${clip}`
+			} else {
+				cmd = `playlists/${playlist}/items`
+			}
 			let body = {}
 			switch (event.options.type) {
 				case '0':
 					// Clip
-					if ((event.options.name) !== '') {
+					if (event.options.name !== '') {
 						body = {
-							"clip_type" : '0',
-							"name": (event.options.name),
-							"url": (event.options.filePath),
+							clip_type: '0',
+							name: event.options.name,
+							url: event.options.filePath,
 						}
 					} else {
 						body = {
-							"clip_type" : '0',
-							"url" : (event.options.filePath),
+							clip_type: '0',
+							url: event.options.filePath,
 						}
 					}
 					break
 				case '3':
 					// Comment
-					if ((event.options.name) !== '') {
+					if (event.options.name !== '') {
 						body = {
-							"clip_type" : '3',
-							"name" : (event.options.name),
+							clip_type: '3',
+							name: event.options.name,
 						}
 					} else {
 						body = {
-							"clip_type" : '3',
+							clip_type: '3',
 						}
 					}
 					break
 				case '4':
 					// Live
-					if ((event.options.name) !== '') {
+					if (event.options.name !== '') {
 						body = {
-							"clip_type" : '4',
-							"name" : (event.options.name),
-							"live_source_name" : (event.options.liveSource),
-							"duration" : (event.options.Duration),
+							clip_type: '4',
+							name: event.options.name,
+							live_source_name: event.options.liveSource,
+							duration: event.options.Duration,
 						}
 					} else {
 						body = {
-							"clip_type" : '4',
-							"live_source_name" : (event.options.liveSource),
-							"duration" : (event.options.Duration),
+							clip_type: '4',
+							live_source_name: event.options.liveSource,
+							duration: event.options.Duration,
 						}
 					}
 					break
 				case '5':
 					// Stream
-					if ((event.options.name) !== '') {
+					if (event.options.name !== '') {
 						body = {
-							"clip_type" : '5',
-							"name" : (event.options.name),
-							"url" : (event.options.streamURL),
-							"duration" : (event.options.Duration),
+							clip_type: '5',
+							name: event.options.name,
+							url: event.options.streamURL,
+							duration: event.options.Duration,
 						}
 					} else {
 						body = {
-							"clip_type" : '5',
-							"url" : (event.options.streamURL),
-							"duration" : (event.options.Duration),
+							clip_type: '5',
+							url: event.options.streamURL,
+							duration: event.options.Duration,
 						}
 					}
 					break

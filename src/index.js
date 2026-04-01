@@ -237,7 +237,6 @@ class OnTheAirVideoInstance extends InstanceBase {
 			this.playlistWs.on('error', (error) => {
 				this.log('debug', `Playlist WebSocket error: ${error.message}`)
 			})
-
 		} catch (error) {
 			this.log('error', `Failed to create WebSocket: ${error.message}`)
 			this.scheduleWebSocketReconnect()
