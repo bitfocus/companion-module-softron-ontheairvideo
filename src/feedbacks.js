@@ -9,12 +9,12 @@ export function initFeedbacks() {
 		bgcolor: combineRgb(0, 204, 0),
 	}
 
-	const stylePaused = {
+	const _stylePaused = {
 		color: combineRgb(255, 255, 255),
 		bgcolor: combineRgb(255, 255, 0),
 	}
 
-	const styleStopped = {
+	const _styleStopped = {
 		color: combineRgb(255, 255, 255),
 		bgcolor: combineRgb(255, 0, 0),
 	}
@@ -139,7 +139,7 @@ export function initFeedbacks() {
 			},
 		],
 		style: styleRemaining,
-		callback: ({ options }, bank) => {
+		callback: ({ options }, _bank) => {
 			const status = this.playing.playback_status ?? this.playing.item_playback_status
 			const s = typeof status === 'string' ? status.toLowerCase() : ''
 			if (s !== 'playing' && s !== 'paused') {
@@ -185,7 +185,7 @@ export function initFeedbacks() {
 		unsubscribe: (feedback) => {
 			this.unsubscribeThumbnailFeedback(feedback)
 		},
-		callback: async (feedback) => {
+		callback: async (_feedback) => {
 			return this.getThumbnailImage()
 		},
 	}

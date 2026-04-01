@@ -167,7 +167,7 @@ class OnTheAirVideoInstance extends InstanceBase {
 	 * Initialize presets
 	 * @param  {} updates
 	 */
-	initPresets(updates) {
+	initPresets(_updates) {
 		this.setPresetDefinitions(getPresets.bind(this)())
 	}
 
@@ -175,7 +175,7 @@ class OnTheAirVideoInstance extends InstanceBase {
 	 * Set all the actions
 	 * @param  {} system
 	 */
-	initActions(system) {
+	initActions(_system) {
 		this.setActionDefinitions(this.getActions())
 	}
 
@@ -229,7 +229,7 @@ class OnTheAirVideoInstance extends InstanceBase {
 						this.log('debug', 'Playlist change detected via WebSocket, refreshing playlists')
 						this.getPlaylists()
 					}
-				} catch (error) {
+				} catch {
 					// Ignore invalid JSON
 				}
 			})

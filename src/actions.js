@@ -307,7 +307,7 @@ export function getActions() {
 	actions['updatePlaylists'] = {
 		name: 'Update playlist info',
 		options: [],
-		callback: async (event) => {
+		callback: async (_event) => {
 			this.getPlaylists()
 		},
 	}
@@ -371,7 +371,7 @@ export function getActions() {
 	actions['cueTrigger'] = {
 		name: 'Cue Trigger (Space Bar)',
 		options: [],
-		callback: async (event) => {
+		callback: async (_event) => {
 			await this.sendGetRequest('playback/cue_trigger')
 		},
 	}
@@ -429,7 +429,7 @@ export function getActions() {
 	actions['updateCGProjects'] = {
 		name: 'Update CG projects info',
 		options: [],
-		callback: async (event) => {
+		callback: async (_event) => {
 			this.getCGProjects()
 		},
 	}
