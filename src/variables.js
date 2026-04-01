@@ -166,8 +166,9 @@ export function updatePlaylistVariables() {
 }
 
 export function renderTime(seconds) {
+	const s = Math.max(0, seconds || 0)
 	let time = new Date(null)
-	time.setSeconds(seconds ? seconds : 0)
+	time.setSeconds(s)
 	let timeStr = time.toISOString().substring(11, 19)
 	return timeStr.startsWith('00') ? timeStr.substring(3, 8) : timeStr
 }

@@ -392,7 +392,7 @@ class OnTheAirVideoInstance extends InstanceBase {
 			event.remaining_time_until_next_live != null ? renderTime(event.remaining_time_until_next_live) : '-'
 
 		this.setVariableValues(list)
-		this.checkFeedbacks()
+		this.checkFeedbacks('playbackStatus', 'clipActive', 'clipStatus', 'timeRemaining')
 	}
 
 	/**
@@ -621,9 +621,9 @@ class OnTheAirVideoInstance extends InstanceBase {
 	 */
 	getPlaylists() {
 		this.playlists = []
+		this.pendingItemsCount = 0
 		this.sendGetRequest('playlists')
 	}
-	// TODO Update playlists periodically
 
 	/**
 	 * Fetch system info from /info endpoint
@@ -652,7 +652,7 @@ class OnTheAirVideoInstance extends InstanceBase {
 			response = await got(cmd, undefined, this.gotOptions)
 			poll = await got(this.pollCmd, undefined, this.gotOptions)
 		} catch (error) {
-			console.log(error.message)
+			this.log('error', error.message)
 			this.processError(error)
 			return
 		}
@@ -680,7 +680,7 @@ class OnTheAirVideoInstance extends InstanceBase {
 			response = await got.post(cmd, postOptions)
 			poll = await got(this.pollCmd, undefined, this.gotOptions)
 		} catch (error) {
-			console.log(error.message)
+			this.log('error', error.message)
 			this.processError(error)
 			return
 		}
@@ -696,7 +696,7 @@ class OnTheAirVideoInstance extends InstanceBase {
 	 * @since 2.0.0
 	 */
 	processResult(response) {
-		console.log(`Processing result: ${response.statusCode} ${response.request.requestUrl.pathname}`)
+		this.log('debug', `Processing result: ${response.statusCode} ${response.request.requestUrl.pathname}`)
 		switch (response.statusCode) {
 			case 200: // OK
 				this.processData200(response.request.requestUrl.pathname, response.body)
@@ -740,43 +740,52 @@ class OnTheAirVideoInstance extends InstanceBase {
 			this.checkFeedbacks()
 		} else if (cmd == '/playlists') {
 			// Updated the list of playlists
-			let index
-			for (index in data) {
-				this.playlists.push({ id: data[index].unique_id, label: data[index].name, clips: [] })
-				this.sendGetRequest('playlists/' + data[index].unique_id + '/items')
+			this.playlists = []
+			this.pendingItemsCount = Array.isArray(data) ? data.length : 0
+			for (const item of data) {
+				this.playlists.push({ id: item.unique_id, label: item.name, clips: [] })
+				this.sendGetRequest('playlists/' + item.unique_id + '/items')
 			}
-			this.updateVariableDefinitions() // Refresh the variables
+			if (this.pendingItemsCount === 0) {
+				this.updateVariableDefinitions()
+			}
 		} else if (cmd.match(/^\/playlists\/.*\/items$/)) {
 			// Update the clips for the given playlist
-			let playlistID = decodeURI(cmd.match(/playlists\/(.*)\/items/)[1])
-			let index
-			let playlist = this.playlists.find((element) => element.id === playlistID)
+			const playlistID = decodeURI(cmd.match(/playlists\/(.*)\/items/)[1])
+			const playlist = this.playlists.find((element) => element.id === playlistID)
 
-			for (index in data) {
-				playlist['clips'].push(data[index])
+			if (playlist) {
+				playlist.clips = Array.isArray(data) ? [...data] : []
 			}
-			this.updateVariableDefinitions() // Refresh the variables
-			this.buildIdMaps() // Rebuild ID maps with new clip data
-			this.calculatePlaylistElapsedBase() // Recalculate duration when clips change
+
+			// Only rebuild maps and recalculate once all /items responses have arrived
+			if (this.pendingItemsCount > 0) {
+				this.pendingItemsCount--
+			}
+			if (this.pendingItemsCount <= 0) {
+				this.updateVariableDefinitions() // Refresh the variables
+				this.buildIdMaps() // Rebuild ID maps with new clip data
+				this.calculatePlaylistElapsedBase() // Recalculate duration when clips change
+			}
 		} else if (cmd == '/playback/cg_projects') {
 			// Updated the list of CG projects
-			console.log(`CG Projects data: ${JSON.stringify(data)}`)
+			this.log('debug', `CG Projects data: ${JSON.stringify(data)}`)
 			// The API might return the array directly or nested in cg_projects property
 			const projects = Array.isArray(data) ? data : data.cg_projects || []
-			let index
-			for (index in projects) {
-				const projectId = projects[index].unique_id
+			this.cgProjects = []
+			for (const project of projects) {
+				const projectId = project.unique_id
 				this.cgProjects.push({
 					id: projectId,
-					label: projects[index].display_name,
-					status: projects[index].status,
-					published_items: projects[index].published_items || [],
+					label: project.display_name,
+					status: project.status,
+					published_items: project.published_items || [],
 				})
 				// Initialize cgState for this project so feedbacks work immediately
 				this.cgState[projectId] = {
-					status: projects[index].status || 'Stopped',
-					elapsed_time: projects[index].elapsed_time || 0,
-					duration: projects[index].duration || 0,
+					status: project.status || 'Stopped',
+					elapsed_time: project.elapsed_time || 0,
+					duration: project.duration || 0,
 				}
 			}
 			this.log('debug', `Loaded ${this.cgProjects.length} CG projects`)
@@ -801,7 +810,7 @@ class OnTheAirVideoInstance extends InstanceBase {
 	 * @private
 	 */
 	processError(error) {
-		console.log(`Processing error: ${error.message}`)
+		this.log('debug', `Processing error: ${error.message}`)
 		if (error !== null) {
 			if (error.code !== undefined) {
 				this.log('error', 'Connection failed (' + error.message + ')')

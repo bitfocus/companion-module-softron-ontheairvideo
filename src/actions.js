@@ -72,7 +72,7 @@ export function getActions() {
 				type: 'textinput',
 				label: 'Time (timecode or seconds)',
 				id: 'position',
-				regex: '/^(d+(.d+)?)|([0-1][0-9]|[0-2][0-3]):([0-5][0-9]):([0-5][0-9])[:;]([0-6][0-9])$/',
+				regex: '/^(\\d+(\\.\\d+)?)|([0-1][0-9]|[0-2][0-3]):([0-5][0-9]):([0-5][0-9])[:;]([0-6][0-9])$/',
 				required: true,
 			},
 		],
@@ -164,7 +164,7 @@ export function getActions() {
 				type: 'textinput',
 				label: 'Time (timecode or seconds)',
 				id: 'position',
-				regex: '/([0-1][0-9]|[0-2][0-3]):([0-5][0-9]):([0-5][0-9])[:;]([0-6][0-9])|(d+(.d+)?)/',
+				regex: '/([0-1][0-9]|[0-2][0-3]):([0-5][0-9]):([0-5][0-9])[:;]([0-6][0-9])|(\\d+(\\.\\d+)?)/',
 				required: true,
 			},
 		],
@@ -295,8 +295,9 @@ export function getActions() {
 			},
 		],
 		callback: async (event) => {
-			if (this.playing.item_playback_status == 'playing') {
-				const mode = this.playing.item_playback_status == 'playing' ? 'play' : 'pause'
+			const status = (this.playing.playback_status || this.playing.item_playback_status || '').toLowerCase()
+			if (status === 'playing' || status === 'paused') {
+				const mode = status === 'playing' ? 'play' : 'pause'
 				const time = this.playing.item_duration - event.options.tMinus
 				const cmd = `playlists/${this.playing.playlist_index}/items/${this.playing.item_index}/${mode}?position_relative_seconds=${time}`
 				await this.sendGetRequest(cmd)
@@ -523,7 +524,6 @@ export function getActions() {
 				type: 'number',
 				label: 'Item duration (seconds)',
 				id: 'Duration',
-				default: '',
 				tooltip: 'Item duration for the item',
 				default: 60,
 				min: 1,
