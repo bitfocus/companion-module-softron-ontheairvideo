@@ -358,9 +358,21 @@ class OnTheAirVideoInstance extends InstanceBase {
 		this.playing.item_unique_id = event.item_unique_id
 		this.playing.item_display_name = event.item_display_name
 
+		if (event.playlist_duration != null) {
+			this.playing.playlist_duration = event.playlist_duration
+		}
+
+		// Total duration: clip cache can be 0 while /items are still loading or if the API omits per-clip duration
+		const playlistTotal =
+			this.currentPlaylistDuration > 0
+				? this.currentPlaylistDuration
+				: typeof this.playing.playlist_duration === 'number' && !Number.isNaN(this.playing.playlist_duration)
+					? this.playing.playlist_duration
+					: 0
+
 		// Calculate playlist timing
 		const playlistElapsed = this.playlistElapsedBase + (event.item_elapsed_time || 0)
-		const playlistRemaining = this.currentPlaylistDuration - playlistElapsed
+		const playlistRemaining = playlistTotal - playlistElapsed
 
 		// Update variables
 		const list = {}
@@ -368,6 +380,7 @@ class OnTheAirVideoInstance extends InstanceBase {
 		list['clipElapsed'] = event.item_elapsed_time != null ? renderTime(event.item_elapsed_time) : '-'
 		list['clipRemaining'] = event.item_remaining_time != null ? renderTime(event.item_remaining_time) : '-'
 		list['activeClipName'] = event.item_display_name || '-'
+		list['playlistDuration'] = renderTime(playlistTotal)
 		list['playlistElapsed'] = playlistElapsed >= 0 ? renderTime(playlistElapsed) : '-'
 		list['playlistRemaining'] = playlistRemaining >= 0 ? renderTime(playlistRemaining) : '-'
 
@@ -499,6 +512,15 @@ class OnTheAirVideoInstance extends InstanceBase {
 	}
 
 	/**
+	 * Duration in seconds from a playlist item returned by the REST API (field name varies).
+	 */
+	clipSeconds(clip) {
+		if (!clip) return 0
+		const v = clip.duration ?? clip.item_duration ?? clip.Duration
+		return typeof v === 'number' && !Number.isNaN(v) ? v : 0
+	}
+
+	/**
 	 * Calculate the sum of durations for clips before the current clip
 	 */
 	calculatePlaylistElapsedBase() {
@@ -518,12 +540,24 @@ class OnTheAirVideoInstance extends InstanceBase {
 		// Sum durations of clips before current clip
 		let sum = 0
 		for (let i = 0; i < this.currentClipIndex && i < playlist.clips.length; i++) {
-			sum += playlist.clips[i].duration || 0
+			sum += this.clipSeconds(playlist.clips[i])
 		}
 		this.playlistElapsedBase = sum
 
-		// Calculate total playlist duration
-		this.currentPlaylistDuration = playlist.clips.reduce((acc, clip) => acc + (clip.duration || 0), 0)
+		const fromClips = playlist.clips.reduce((acc, clip) => acc + this.clipSeconds(clip), 0)
+		const fromPlaying =
+			typeof this.playing.playlist_duration === 'number' && !Number.isNaN(this.playing.playlist_duration)
+				? this.playing.playlist_duration
+				: 0
+		if (fromClips > 0) {
+			this.currentPlaylistDuration = fromClips
+		} else if (fromPlaying > 0) {
+			this.currentPlaylistDuration = fromPlaying
+		} else if (playlist.clips.length === 0) {
+			// Staggered /items loads: another playlist's items may have triggered this; do not force 0
+		} else {
+			this.currentPlaylistDuration = 0
+		}
 
 		// Update playlist duration variable
 		this.setVariableValues({
@@ -547,7 +581,7 @@ class OnTheAirVideoInstance extends InstanceBase {
 							playlistIndex: pIndex,
 							clipIndex: cIndex,
 							name: clip.name,
-							duration: clip.duration,
+							duration: this.clipSeconds(clip),
 						})
 					}
 				})

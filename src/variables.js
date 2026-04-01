@@ -132,6 +132,9 @@ export function updateStatusVariables(status) {
 	list['activePlaylistName'] = status.playlist_display_name == undefined ? '-' : status.playlist_display_name
 	list['activeClip'] = status.item_index == undefined ? '-' : status.item_index
 	list['activeClipName'] = status.item_display_name == undefined ? '-' : status.item_display_name
+	if (typeof status.playlist_duration === 'number' && !Number.isNaN(status.playlist_duration)) {
+		this.currentPlaylistDuration = status.playlist_duration
+	}
 	list['playlistDuration'] = status.playlist_duration == undefined ? '-' : renderTime(status.playlist_duration)
 	list['playlistElapsed'] = status.playlist_elapsed == undefined ? '-' : renderTime(status.playlist_elapsed)
 	list['playlistRemaining'] = status.playlist_remaining == undefined ? '-' : renderTime(status.playlist_remaining)
@@ -152,9 +155,10 @@ export function updatePlaylistVariables() {
 		list[`playlist_${pIndex}`] = playlist.label
 		//	this.setVariable(`playlist_${pIndex}`, playlist.label)
 		playlist.clips.forEach((clip, index) => {
-			this.log('debug', `-- Updating variables for clip ${index}: ${clip.name}, duration: ${clip.duration}`)
+			const sec = this.clipSeconds(clip)
+			this.log('debug', `-- Updating variables for clip ${index}: ${clip.name}, duration: ${sec}`)
 			list[`clip_${pIndex}_${index}`] = clip.name
-			list[`clipDuration_${pIndex}_${index}`] = renderTime(clip.duration)
+			list[`clipDuration_${pIndex}_${index}`] = renderTime(sec)
 			//		this.setVariable(`clip_${pIndex}_${index}`, clip)
 		})
 	})
