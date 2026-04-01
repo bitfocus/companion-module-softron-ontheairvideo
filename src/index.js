@@ -94,7 +94,7 @@ class OnTheAirVideoInstance extends InstanceBase {
 				max: 65535,
 				default: 8081,
 			},
-			]
+		]
 	}
 
 	/**
@@ -187,10 +187,12 @@ class OnTheAirVideoInstance extends InstanceBase {
 		this.closeWebSocket()
 
 		const wsUrl = `ws://${this.config.host}:${this.config.port}/playback`
+		const playlistWsUrl = `ws://${this.config.host}:${this.config.port}/playlists`
 		this.log('info', `Connecting to WebSocket: ${wsUrl}`)
 
 		try {
 			this.ws = new WebSocket(wsUrl)
+			this.playlistWs = new WebSocket(playlistWsUrl, ['playlist_update_v1'])
 
 			this.ws.on('open', () => {
 				this.log('info', 'WebSocket connected')
@@ -219,6 +221,23 @@ class OnTheAirVideoInstance extends InstanceBase {
 				this.log('error', `WebSocket error: ${error.message}`)
 				this.wsConnected = false
 			})
+
+			this.playlistWs.on('message', (data) => {
+				try {
+					const message = JSON.parse(data.toString())
+					if (message.event === 'playlist_changed') {
+						this.log('debug', 'Playlist change detected via WebSocket, refreshing playlists')
+						this.getPlaylists()
+					}
+				} catch (error) {
+					// Ignore invalid JSON
+				}
+			})
+
+			this.playlistWs.on('error', (error) => {
+				this.log('debug', `Playlist WebSocket error: ${error.message}`)
+			})
+
 		} catch (error) {
 			this.log('error', `Failed to create WebSocket: ${error.message}`)
 			this.scheduleWebSocketReconnect()
@@ -241,6 +260,13 @@ class OnTheAirVideoInstance extends InstanceBase {
 				this.ws.close()
 			}
 			this.ws = null
+		}
+		if (this.playlistWs) {
+			this.playlistWs.removeAllListeners()
+			if (this.playlistWs.readyState === WebSocket.OPEN || this.playlistWs.readyState === WebSocket.CONNECTING) {
+				this.playlistWs.close()
+			}
+			this.playlistWs = null
 		}
 		this.wsConnected = false
 	}
@@ -696,6 +722,7 @@ class OnTheAirVideoInstance extends InstanceBase {
 			}
 			this.updateVariableDefinitions() // Refresh the variables
 			this.buildIdMaps() // Rebuild ID maps with new clip data
+			this.calculatePlaylistElapsedBase() // Recalculate duration when clips change
 		} else if (cmd == '/playback/cg_projects') {
 			// Updated the list of CG projects
 			console.log(`CG Projects data: ${JSON.stringify(data)}`)
