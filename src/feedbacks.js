@@ -140,21 +140,26 @@ export function initFeedbacks() {
 		],
 		style: styleRemaining,
 		callback: ({ options }, bank) => {
-			if (this.playing.item_playback_status == 'playing' || 'paused') {
-				switch (options.type) {
-					case 'clip':
-						if (Math.floor(this.playing.item_remaining) <= options.time) {
-							return true
-						}
-						break
-					case 'playlist':
-						if (Math.floor(this.playing.playlist_remaining) <= options.time) {
-							return true
-						}
-						break
-					default:
-						return false
+			const status = this.playing.playback_status ?? this.playing.item_playback_status
+			const s = typeof status === 'string' ? status.toLowerCase() : ''
+			if (s !== 'playing' && s !== 'paused') {
+				return false
+			}
+			const threshold = Number(options.time)
+			if (!Number.isFinite(threshold)) {
+				return false
+			}
+			switch (options.type) {
+				case 'clip': {
+					const remaining = this.playing.item_remaining
+					return typeof remaining === 'number' && Math.floor(remaining) <= threshold
 				}
+				case 'playlist': {
+					const remaining = this.playing.playlist_remaining
+					return typeof remaining === 'number' && Math.floor(remaining) <= threshold
+				}
+				default:
+					return false
 			}
 		},
 	}

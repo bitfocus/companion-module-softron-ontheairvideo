@@ -373,6 +373,8 @@ class OnTheAirVideoInstance extends InstanceBase {
 		// Calculate playlist timing
 		const playlistElapsed = this.playlistElapsedBase + (event.item_elapsed_time || 0)
 		const playlistRemaining = playlistTotal - playlistElapsed
+		this.playing.playlist_elapsed = playlistElapsed
+		this.playing.playlist_remaining = playlistRemaining
 
 		// Update variables
 		const list = {}
