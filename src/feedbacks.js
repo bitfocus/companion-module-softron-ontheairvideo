@@ -65,7 +65,7 @@ export function initFeedbacks() {
 				label: 'Clip',
 				id: 'clip',
 				tooltip: 'Enter an index (zero based) or name of a clip',
-				defauls: '0',
+				default: '0',
 				regex: Regex.SOMETHING,
 			},
 		],
@@ -96,7 +96,7 @@ export function initFeedbacks() {
 				label: 'Clip',
 				id: 'clip',
 				tooltip: 'Enter an index (zero based) or name of a clip',
-				defauls: '0',
+				default: '0',
 				regex: Regex.SOMETHING,
 			},
 			{
