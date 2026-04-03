@@ -94,7 +94,7 @@ class OnTheAirVideoInstance extends InstanceBase {
 				max: 65535,
 				default: 8081,
 			},
-			]
+		]
 	}
 
 	/**
@@ -167,7 +167,7 @@ class OnTheAirVideoInstance extends InstanceBase {
 	 * Initialize presets
 	 * @param  {} updates
 	 */
-	initPresets(updates) {
+	initPresets(_updates) {
 		this.setPresetDefinitions(getPresets.bind(this)())
 	}
 
@@ -175,7 +175,7 @@ class OnTheAirVideoInstance extends InstanceBase {
 	 * Set all the actions
 	 * @param  {} system
 	 */
-	initActions(system) {
+	initActions(_system) {
 		this.setActionDefinitions(this.getActions())
 	}
 
@@ -187,10 +187,12 @@ class OnTheAirVideoInstance extends InstanceBase {
 		this.closeWebSocket()
 
 		const wsUrl = `ws://${this.config.host}:${this.config.port}/playback`
+		const playlistWsUrl = `ws://${this.config.host}:${this.config.port}/playlists`
 		this.log('info', `Connecting to WebSocket: ${wsUrl}`)
 
 		try {
 			this.ws = new WebSocket(wsUrl)
+			this.playlistWs = new WebSocket(playlistWsUrl, ['playlist_update_v1'])
 
 			this.ws.on('open', () => {
 				this.log('info', 'WebSocket connected')
@@ -219,6 +221,22 @@ class OnTheAirVideoInstance extends InstanceBase {
 				this.log('error', `WebSocket error: ${error.message}`)
 				this.wsConnected = false
 			})
+
+			this.playlistWs.on('message', (data) => {
+				try {
+					const message = JSON.parse(data.toString())
+					if (message.event === 'playlist_changed') {
+						this.log('debug', 'Playlist change detected via WebSocket, refreshing playlists')
+						this.getPlaylists()
+					}
+				} catch {
+					// Ignore invalid JSON
+				}
+			})
+
+			this.playlistWs.on('error', (error) => {
+				this.log('debug', `Playlist WebSocket error: ${error.message}`)
+			})
 		} catch (error) {
 			this.log('error', `Failed to create WebSocket: ${error.message}`)
 			this.scheduleWebSocketReconnect()
@@ -241,6 +259,13 @@ class OnTheAirVideoInstance extends InstanceBase {
 				this.ws.close()
 			}
 			this.ws = null
+		}
+		if (this.playlistWs) {
+			this.playlistWs.removeAllListeners()
+			if (this.playlistWs.readyState === WebSocket.OPEN || this.playlistWs.readyState === WebSocket.CONNECTING) {
+				this.playlistWs.close()
+			}
+			this.playlistWs = null
 		}
 		this.wsConnected = false
 	}
@@ -333,9 +358,23 @@ class OnTheAirVideoInstance extends InstanceBase {
 		this.playing.item_unique_id = event.item_unique_id
 		this.playing.item_display_name = event.item_display_name
 
+		if (event.playlist_duration != null) {
+			this.playing.playlist_duration = event.playlist_duration
+		}
+
+		// Total duration: clip cache can be 0 while /items are still loading or if the API omits per-clip duration
+		const playlistTotal =
+			this.currentPlaylistDuration > 0
+				? this.currentPlaylistDuration
+				: typeof this.playing.playlist_duration === 'number' && !Number.isNaN(this.playing.playlist_duration)
+					? this.playing.playlist_duration
+					: 0
+
 		// Calculate playlist timing
 		const playlistElapsed = this.playlistElapsedBase + (event.item_elapsed_time || 0)
-		const playlistRemaining = this.currentPlaylistDuration - playlistElapsed
+		const playlistRemaining = playlistTotal - playlistElapsed
+		this.playing.playlist_elapsed = playlistElapsed
+		this.playing.playlist_remaining = playlistRemaining
 
 		// Update variables
 		const list = {}
@@ -343,6 +382,7 @@ class OnTheAirVideoInstance extends InstanceBase {
 		list['clipElapsed'] = event.item_elapsed_time != null ? renderTime(event.item_elapsed_time) : '-'
 		list['clipRemaining'] = event.item_remaining_time != null ? renderTime(event.item_remaining_time) : '-'
 		list['activeClipName'] = event.item_display_name || '-'
+		list['playlistDuration'] = renderTime(playlistTotal)
 		list['playlistElapsed'] = playlistElapsed >= 0 ? renderTime(playlistElapsed) : '-'
 		list['playlistRemaining'] = playlistRemaining >= 0 ? renderTime(playlistRemaining) : '-'
 
@@ -352,7 +392,7 @@ class OnTheAirVideoInstance extends InstanceBase {
 			event.remaining_time_until_next_live != null ? renderTime(event.remaining_time_until_next_live) : '-'
 
 		this.setVariableValues(list)
-		this.checkFeedbacks()
+		this.checkFeedbacks('playbackStatus', 'clipActive', 'clipStatus', 'timeRemaining')
 	}
 
 	/**
@@ -474,6 +514,15 @@ class OnTheAirVideoInstance extends InstanceBase {
 	}
 
 	/**
+	 * Duration in seconds from a playlist item returned by the REST API (field name varies).
+	 */
+	clipSeconds(clip) {
+		if (!clip) return 0
+		const v = clip.duration ?? clip.item_duration ?? clip.Duration
+		return typeof v === 'number' && !Number.isNaN(v) ? v : 0
+	}
+
+	/**
 	 * Calculate the sum of durations for clips before the current clip
 	 */
 	calculatePlaylistElapsedBase() {
@@ -493,12 +542,24 @@ class OnTheAirVideoInstance extends InstanceBase {
 		// Sum durations of clips before current clip
 		let sum = 0
 		for (let i = 0; i < this.currentClipIndex && i < playlist.clips.length; i++) {
-			sum += playlist.clips[i].duration || 0
+			sum += this.clipSeconds(playlist.clips[i])
 		}
 		this.playlistElapsedBase = sum
 
-		// Calculate total playlist duration
-		this.currentPlaylistDuration = playlist.clips.reduce((acc, clip) => acc + (clip.duration || 0), 0)
+		const fromClips = playlist.clips.reduce((acc, clip) => acc + this.clipSeconds(clip), 0)
+		const fromPlaying =
+			typeof this.playing.playlist_duration === 'number' && !Number.isNaN(this.playing.playlist_duration)
+				? this.playing.playlist_duration
+				: 0
+		if (fromClips > 0) {
+			this.currentPlaylistDuration = fromClips
+		} else if (fromPlaying > 0) {
+			this.currentPlaylistDuration = fromPlaying
+		} else if (playlist.clips.length === 0) {
+			// Staggered /items loads: another playlist's items may have triggered this; do not force 0
+		} else {
+			this.currentPlaylistDuration = 0
+		}
 
 		// Update playlist duration variable
 		this.setVariableValues({
@@ -522,7 +583,7 @@ class OnTheAirVideoInstance extends InstanceBase {
 							playlistIndex: pIndex,
 							clipIndex: cIndex,
 							name: clip.name,
-							duration: clip.duration,
+							duration: this.clipSeconds(clip),
 						})
 					}
 				})
@@ -560,9 +621,9 @@ class OnTheAirVideoInstance extends InstanceBase {
 	 */
 	getPlaylists() {
 		this.playlists = []
+		this.pendingItemsCount = 0
 		this.sendGetRequest('playlists')
 	}
-	// TODO Update playlists periodically
 
 	/**
 	 * Fetch system info from /info endpoint
@@ -591,7 +652,7 @@ class OnTheAirVideoInstance extends InstanceBase {
 			response = await got(cmd, undefined, this.gotOptions)
 			poll = await got(this.pollCmd, undefined, this.gotOptions)
 		} catch (error) {
-			console.log(error.message)
+			this.log('error', error.message)
 			this.processError(error)
 			return
 		}
@@ -619,7 +680,7 @@ class OnTheAirVideoInstance extends InstanceBase {
 			response = await got.post(cmd, postOptions)
 			poll = await got(this.pollCmd, undefined, this.gotOptions)
 		} catch (error) {
-			console.log(error.message)
+			this.log('error', error.message)
 			this.processError(error)
 			return
 		}
@@ -635,7 +696,7 @@ class OnTheAirVideoInstance extends InstanceBase {
 	 * @since 2.0.0
 	 */
 	processResult(response) {
-		console.log(`Processing result: ${response.statusCode} ${response.request.requestUrl.pathname}`)
+		this.log('debug', `Processing result: ${response.statusCode} ${response.request.requestUrl.pathname}`)
 		switch (response.statusCode) {
 			case 200: // OK
 				this.processData200(response.request.requestUrl.pathname, response.body)
@@ -679,42 +740,52 @@ class OnTheAirVideoInstance extends InstanceBase {
 			this.checkFeedbacks()
 		} else if (cmd == '/playlists') {
 			// Updated the list of playlists
-			let index
-			for (index in data) {
-				this.playlists.push({ id: data[index].unique_id, label: data[index].name, clips: [] })
-				this.sendGetRequest('playlists/' + data[index].unique_id + '/items')
+			this.playlists = []
+			this.pendingItemsCount = Array.isArray(data) ? data.length : 0
+			for (const item of data) {
+				this.playlists.push({ id: item.unique_id, label: item.name, clips: [] })
+				this.sendGetRequest('playlists/' + item.unique_id + '/items')
 			}
-			this.updateVariableDefinitions() // Refresh the variables
+			if (this.pendingItemsCount === 0) {
+				this.updateVariableDefinitions()
+			}
 		} else if (cmd.match(/^\/playlists\/.*\/items$/)) {
 			// Update the clips for the given playlist
-			let playlistID = decodeURI(cmd.match(/playlists\/(.*)\/items/)[1])
-			let index
-			let playlist = this.playlists.find((element) => element.id === playlistID)
+			const playlistID = decodeURI(cmd.match(/playlists\/(.*)\/items/)[1])
+			const playlist = this.playlists.find((element) => element.id === playlistID)
 
-			for (index in data) {
-				playlist['clips'].push(data[index])
+			if (playlist) {
+				playlist.clips = Array.isArray(data) ? [...data] : []
 			}
-			this.updateVariableDefinitions() // Refresh the variables
-			this.buildIdMaps() // Rebuild ID maps with new clip data
+
+			// Only rebuild maps and recalculate once all /items responses have arrived
+			if (this.pendingItemsCount > 0) {
+				this.pendingItemsCount--
+			}
+			if (this.pendingItemsCount <= 0) {
+				this.updateVariableDefinitions() // Refresh the variables
+				this.buildIdMaps() // Rebuild ID maps with new clip data
+				this.calculatePlaylistElapsedBase() // Recalculate duration when clips change
+			}
 		} else if (cmd == '/playback/cg_projects') {
 			// Updated the list of CG projects
-			console.log(`CG Projects data: ${JSON.stringify(data)}`)
+			this.log('debug', `CG Projects data: ${JSON.stringify(data)}`)
 			// The API might return the array directly or nested in cg_projects property
 			const projects = Array.isArray(data) ? data : data.cg_projects || []
-			let index
-			for (index in projects) {
-				const projectId = projects[index].unique_id
+			this.cgProjects = []
+			for (const project of projects) {
+				const projectId = project.unique_id
 				this.cgProjects.push({
 					id: projectId,
-					label: projects[index].display_name,
-					status: projects[index].status,
-					published_items: projects[index].published_items || [],
+					label: project.display_name,
+					status: project.status,
+					published_items: project.published_items || [],
 				})
 				// Initialize cgState for this project so feedbacks work immediately
 				this.cgState[projectId] = {
-					status: projects[index].status || 'Stopped',
-					elapsed_time: projects[index].elapsed_time || 0,
-					duration: projects[index].duration || 0,
+					status: project.status || 'Stopped',
+					elapsed_time: project.elapsed_time || 0,
+					duration: project.duration || 0,
 				}
 			}
 			this.log('debug', `Loaded ${this.cgProjects.length} CG projects`)
@@ -739,7 +810,7 @@ class OnTheAirVideoInstance extends InstanceBase {
 	 * @private
 	 */
 	processError(error) {
-		console.log(`Processing error: ${error.message}`)
+		this.log('debug', `Processing error: ${error.message}`)
 		if (error !== null) {
 			if (error.code !== undefined) {
 				this.log('error', 'Connection failed (' + error.message + ')')
@@ -755,7 +826,7 @@ class OnTheAirVideoInstance extends InstanceBase {
 	 */
 	subscribeThumbnailFeedback(feedback) {
 		const feedbackId = feedback.id
-		const interval = feedback.options.interval || 500
+		const interval = Math.min(10000, Math.max(100, feedback.options.interval || 500))
 
 		this.log('debug', `Subscribing to thumbnail feedback ${feedbackId} with interval ${interval}ms`)
 

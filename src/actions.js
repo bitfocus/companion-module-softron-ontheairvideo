@@ -72,7 +72,7 @@ export function getActions() {
 				type: 'textinput',
 				label: 'Time (timecode or seconds)',
 				id: 'position',
-				regex: '/^(d+(.d+)?)|([0-1][0-9]|[0-2][0-3]):([0-5][0-9]):([0-5][0-9])[:;]([0-6][0-9])$/',
+				regex: '/^(\\d+(\\.\\d+)?)|([0-1][0-9]|[0-2][0-3]):([0-5][0-9]):([0-5][0-9])[:;]([0-6][0-9])$/',
 				required: true,
 			},
 		],
@@ -164,7 +164,7 @@ export function getActions() {
 				type: 'textinput',
 				label: 'Time (timecode or seconds)',
 				id: 'position',
-				regex: '/([0-1][0-9]|[0-2][0-3]):([0-5][0-9]):([0-5][0-9])[:;]([0-6][0-9])|(d+(.d+)?)/',
+				regex: '/([0-1][0-9]|[0-2][0-3]):([0-5][0-9]):([0-5][0-9])[:;]([0-6][0-9])|(\\d+(\\.\\d+)?)/',
 				required: true,
 			},
 		],
@@ -295,8 +295,9 @@ export function getActions() {
 			},
 		],
 		callback: async (event) => {
-			if (this.playing.item_playback_status == 'playing') {
-				const mode = this.playing.item_playback_status == 'playing' ? 'play' : 'pause'
+			const status = (this.playing.playback_status || this.playing.item_playback_status || '').toLowerCase()
+			if (status === 'playing' || status === 'paused') {
+				const mode = status === 'playing' ? 'play' : 'pause'
 				const time = this.playing.item_duration - event.options.tMinus
 				const cmd = `playlists/${this.playing.playlist_index}/items/${this.playing.item_index}/${mode}?position_relative_seconds=${time}`
 				await this.sendGetRequest(cmd)
@@ -306,7 +307,7 @@ export function getActions() {
 	actions['updatePlaylists'] = {
 		name: 'Update playlist info',
 		options: [],
-		callback: async (event) => {
+		callback: async (_event) => {
 			this.getPlaylists()
 		},
 	}
@@ -370,7 +371,7 @@ export function getActions() {
 	actions['cueTrigger'] = {
 		name: 'Cue Trigger (Space Bar)',
 		options: [],
-		callback: async (event) => {
+		callback: async (_event) => {
 			await this.sendGetRequest('playback/cue_trigger')
 		},
 	}
@@ -428,7 +429,7 @@ export function getActions() {
 	actions['updateCGProjects'] = {
 		name: 'Update CG projects info',
 		options: [],
-		callback: async (event) => {
+		callback: async (_event) => {
 			this.getCGProjects()
 		},
 	}
@@ -523,7 +524,6 @@ export function getActions() {
 				type: 'number',
 				label: 'Item duration (seconds)',
 				id: 'Duration',
-				default: '',
 				tooltip: 'Item duration for the item',
 				default: 60,
 				min: 1,
@@ -548,71 +548,71 @@ export function getActions() {
 			const clip = await this.parseVariablesInString(event.options.clip)
 			let cmd = ''
 			if (clip !== '') {
-					cmd = `playlists/${playlist}/items/${clip}`
-				} else {
-					cmd = `playlists/${playlist}/items`
-				}
+				cmd = `playlists/${playlist}/items/${clip}`
+			} else {
+				cmd = `playlists/${playlist}/items`
+			}
 			let body = {}
 			switch (event.options.type) {
 				case '0':
 					// Clip
-					if ((event.options.name) !== '') {
+					if (event.options.name !== '') {
 						body = {
-							"clip_type" : '0',
-							"name": (event.options.name),
-							"url": (event.options.filePath),
+							clip_type: '0',
+							name: event.options.name,
+							url: event.options.filePath,
 						}
 					} else {
 						body = {
-							"clip_type" : '0',
-							"url" : (event.options.filePath),
+							clip_type: '0',
+							url: event.options.filePath,
 						}
 					}
 					break
 				case '3':
 					// Comment
-					if ((event.options.name) !== '') {
+					if (event.options.name !== '') {
 						body = {
-							"clip_type" : '3',
-							"name" : (event.options.name),
+							clip_type: '3',
+							name: event.options.name,
 						}
 					} else {
 						body = {
-							"clip_type" : '3',
+							clip_type: '3',
 						}
 					}
 					break
 				case '4':
 					// Live
-					if ((event.options.name) !== '') {
+					if (event.options.name !== '') {
 						body = {
-							"clip_type" : '4',
-							"name" : (event.options.name),
-							"live_source_name" : (event.options.liveSource),
-							"duration" : (event.options.Duration),
+							clip_type: '4',
+							name: event.options.name,
+							live_source_name: event.options.liveSource,
+							duration: event.options.Duration,
 						}
 					} else {
 						body = {
-							"clip_type" : '4',
-							"live_source_name" : (event.options.liveSource),
-							"duration" : (event.options.Duration),
+							clip_type: '4',
+							live_source_name: event.options.liveSource,
+							duration: event.options.Duration,
 						}
 					}
 					break
 				case '5':
 					// Stream
-					if ((event.options.name) !== '') {
+					if (event.options.name !== '') {
 						body = {
-							"clip_type" : '5',
-							"name" : (event.options.name),
-							"url" : (event.options.streamURL),
-							"duration" : (event.options.Duration),
+							clip_type: '5',
+							name: event.options.name,
+							url: event.options.streamURL,
+							duration: event.options.Duration,
 						}
 					} else {
 						body = {
-							"clip_type" : '5',
-							"url" : (event.options.streamURL),
-							"duration" : (event.options.Duration),
+							clip_type: '5',
+							url: event.options.streamURL,
+							duration: event.options.Duration,
 						}
 					}
 					break

@@ -1,2 +1,13 @@
 import { generateEslintConfig } from '@companion-module/tools/eslint/config.mjs'
-export default generateEslintConfig({})
+
+const config = await generateEslintConfig({})
+
+export default [
+	...config,
+	{
+		files: ['src/**/*.js'],
+		languageOptions: {
+			sourceType: 'module',
+		},
+	},
+]

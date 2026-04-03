@@ -1,11 +1,12 @@
 {
 	"name": "softron-ontheairvideo",
-	"version": "3.0.0",
+	"version": "3.0.1",
 	"main": "src/index.js",
 	"type": "module",
 	"scripts": {
 		"test": "echo \"Error: no test specified\" && exit 1",
-		"format": "prettier -w ."
+		"format": "prettier -w .",
+		"lint": "eslint ."
 	},
 	"license": "MIT",
 	"repository": {
