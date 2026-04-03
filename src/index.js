@@ -826,7 +826,7 @@ class OnTheAirVideoInstance extends InstanceBase {
 	 */
 	subscribeThumbnailFeedback(feedback) {
 		const feedbackId = feedback.id
-		const interval = feedback.options.interval || 500
+		const interval = Math.min(10000, Math.max(100, feedback.options.interval || 500))
 
 		this.log('debug', `Subscribing to thumbnail feedback ${feedbackId} with interval ${interval}ms`)
 
