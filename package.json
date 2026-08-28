@@ -19,7 +19,7 @@
 		"ws": "^8.21.0"
 	},
 	"devDependencies": {
-		"@companion-module/tools": "^2.6.1",
+		"@companion-module/tools": "^2.8.0",
 		"eslint": "^9.38.0",
 		"prettier": "^3.6.2"
 	},
