@@ -26,8 +26,8 @@ export function getActions() {
 			},
 		],
 		callback: async (event) => {
-			const playlist = event.options.playlist
-			const clip = event.options.clip
+			const playlist = await this.parseVariablesInString(event.options.playlist)
+			const clip = await this.parseVariablesInString(event.options.clip)
 			let cmd = ''
 			if (playlist == '') {
 				cmd = `playback/play`
@@ -72,15 +72,14 @@ export function getActions() {
 				type: 'textinput',
 				label: 'Time (timecode or seconds)',
 				id: 'position',
-				useVariables: true,
 				regex: '/^(d+(.d+)?)|([0-1][0-9]|[0-2][0-3]):([0-5][0-9]):([0-5][0-9])[:;]([0-6][0-9])$/',
 				required: true,
 			},
 		],
 		callback: async (event) => {
-			const playlist = event.options.playlist
-			const clip = event.options.clip
-			const position = event.options.position
+			const playlist = await this.parseVariablesInString(event.options.playlist)
+			const clip = await this.parseVariablesInString(event.options.clip)
+			const position = await this.parseVariablesInString(event.options.position)
 			let cmd = ''
 			switch (event.options.type) {
 				case 'relativeTimecode':
@@ -119,8 +118,8 @@ export function getActions() {
 			},
 		],
 		callback: async (event) => {
-			const playlist = event.options.playlist
-			const clip = event.options.clip
+			const playlist = await this.parseVariablesInString(event.options.playlist)
+			const clip = await this.parseVariablesInString(event.options.clip)
 			let cmd = ''
 			if (playlist == '') {
 				cmd = `playback/pause`
@@ -165,15 +164,14 @@ export function getActions() {
 				type: 'textinput',
 				label: 'Time (timecode or seconds)',
 				id: 'position',
-				useVariables: true,
 				regex: '/([0-1][0-9]|[0-2][0-3]):([0-5][0-9]):([0-5][0-9])[:;]([0-6][0-9])|(d+(.d+)?)/',
 				required: true,
 			},
 		],
 		callback: async (event) => {
-			const playlist = event.options.playlist
-			const clip = event.options.clip
-			const position = event.options.position
+			const playlist = await this.parseVariablesInString(event.options.playlist)
+			const clip = await this.parseVariablesInString(event.options.clip)
+			const position = await this.parseVariablesInString(event.options.position)
 			let cmd = ''
 			switch (event.options.type) {
 				case 'relativeTimecode':
@@ -203,7 +201,7 @@ export function getActions() {
 			},
 		],
 		callback: async (event) => {
-			let playlist = event.options.playlist
+			let playlist = await this.parseVariablesInString(event.options.playlist)
 			let cmd = ''
 			if (playlist == '') {
 				cmd = `playback/resume`
@@ -227,7 +225,7 @@ export function getActions() {
 			},
 		],
 		callback: async (event) => {
-			let playlist = event.options.playlist
+			let playlist = await this.parseVariablesInString(event.options.playlist)
 			let cmd = ''
 			if (playlist == '') {
 				cmd = `playback/stop`
@@ -251,7 +249,7 @@ export function getActions() {
 			},
 		],
 		callback: async (event) => {
-			let playlist = event.options.playlist
+			let playlist = await this.parseVariablesInString(event.options.playlist)
 			let cmd = ''
 			if (playlist == '') {
 				cmd = `playback/skip_next`
@@ -275,7 +273,7 @@ export function getActions() {
 			},
 		],
 		callback: async (event) => {
-			let playlist = event.options.playlist
+			let playlist = await this.parseVariablesInString(event.options.playlist)
 			let cmd = ''
 			if (playlist == '') {
 				cmd = `playback/skip_previous`
@@ -335,8 +333,8 @@ export function getActions() {
 			},
 		],
 		callback: async (event) => {
-			const playlist = event.options.playlist
-			const clip = event.options.clip
+			const playlist = await this.parseVariablesInString(event.options.playlist)
+			const clip = await this.parseVariablesInString(event.options.clip)
 			let cmd = ''
 			if (playlist == '') {
 				cmd = `playback/join_in_progress`
@@ -457,7 +455,7 @@ export function getActions() {
 			},
 		],
 		callback: async (event) => {
-			const parameter = event.options.parameter
+			const parameter = await this.parseVariablesInString(event.options.parameter)
 			const cmd = `actions/${event.options.action}/run?parameter=${encodeURIComponent(parameter)}`
 			await this.sendGetRequest(cmd)
 		},
@@ -546,8 +544,8 @@ export function getActions() {
 			},
 		],
 		callback: async (event) => {
-			const playlist = event.options.playlist
-			const clip = String(event.options.clip ?? '')
+			const playlist = await this.parseVariablesInString(event.options.playlist)
+			const clip = await this.parseVariablesInString(event.options.clip)
 			let cmd = ''
 			if (clip !== '') {
 					cmd = `playlists/${playlist}/items/${clip}`
