@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict'
 import test from 'node:test'
-import { getActions } from '../src/actions.js'
+import { getActions } from '../actions.js'
 
 function setup() {
 	const requests = []
